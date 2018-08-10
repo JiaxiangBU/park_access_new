@@ -1,0 +1,447 @@
+---
+title: "NYC Spatial Models - Comparison of SDM Models With and Without Twitter Data"
+author: "Nico Boyd"
+date: "June 26, 2017"
+output: html_document
+---
+
+For both obesity and physical activity, the first SDM model uses a size beta of .00001 and a distance beta of -5. The second SDM model uses the same size and distance betas with the addition of a tweet beta of .001. The third SDM model again uses the same size and distance betas but uses a negative tweet beta of -.001.
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(geojsonio)
+library(tidyverse)
+library(maptools)
+library(rgdal)
+library(rgeos)
+library(spdep)
+library(texreg)
+library(leaflet)
+```
+
+
+```{r read_tracts, echo=FALSE}
+tracts <- geojson_read("nyc_tracts.geojson", what = "sp")
+#plot(tracts)
+```
+
+```{r read_parks, echo=FALSE}
+parks <- geojson_read("nyc_parks.geojson", what = "sp")
+#plot(parks)
+```
+
+```{r show_data, echo=FALSE}
+tracts@data <- tbl_df(tracts@data) %>%
+  select(GEOID, OBESITY, Park_Percent, Phys_Act, MENTAL, Income1, Income2, Income3, Income4, Income5, Income6, Income7, Income8, Income9, Income10, Pop_Density, FulltimeWork, CollegeDeg, Pct0to17, Pct18to29, Pct30to64, Pct65plus, Single_Percent, PctWhite, PctBlack, PctNative, PctAsian, PctPacific, PctOther, PctHispanic) %>%
+    mutate_each(funs(ifelse(is.na(.), 0, .)), Park_Percent)
+
+parks@data <- tbl_df(parks@data) 
+
+tracts@data
+#parks@data
+```
+
+
+Calculate the logsum given a tracts and parks dataset. `tracts$park_ls1` uses only size and distance parameters. `tracts$park_ls2` uses size, distance and tweet parameters. `tracts$park_ls3` uses a size and distance parameter with a negative tweet parameter.
+```{r accessibility}
+source('size00001dist5.R', echo=TRUE)
+tracts$park_ls1 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5))
+
+source('size00001dist5tweet001.R', echo=TRUE)
+tracts$park_ls2 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5, .001))
+
+source('size00001dist5tweetneg001.R', echo=TRUE)
+tracts$park_ls3 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5, -.001))
+
+source('size00001dist15.R', echo=TRUE)
+tracts$park_ls4 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -15))
+
+source('size00001dist15tweet001.R', echo=TRUE)
+tracts$park_ls5 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -15, .001))
+```
+
+
+Map the newly created Park Access variables. Here is a map of accessibility using only the size and distance parameters that are most likely when using obesity as the dependent variable.
+```{r accessibility_leaflet_1, echo=FALSE}
+# Create a continuous palette function
+pal <- colorQuantile(
+  palette = "Greens",
+  domain = c(0, tracts$park_ls1)
+)
+
+pop_content <- function(shp){
+  paste0(
+    "Tract: ", shp$NAME, "<br/>",
+    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
+    "Park Access: ", round(shp$park_ls1, 2), "<br/>"
+  )
+}
+
+leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(weight = 1, popup = ~pop_content(tracts),
+              color = ~pal(park_ls1))
+```
+
+And here is a map of accessibility using the size, distance and tweet parameters (using obesity as the DV). The tweet parameter here is positive.
+```{r accessibility_leaflet_2, echo=FALSE}
+# Create a continuous palette function
+pal <- colorQuantile(
+  palette = "Greens",
+  domain = c(0, tracts$park_ls2)
+)
+
+pop_content <- function(shp){
+  paste0(
+    "Tract: ", shp$NAME, "<br/>",
+    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
+    "Park Access: ", round(shp$park_ls2, 2), "<br/>"
+  )
+}
+
+leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(weight = 1, popup = ~pop_content(tracts),
+              color = ~pal(park_ls2))
+```
+
+Here is a map of accessibility using the betas that produce the most likely model when using physical activity as the dependent variable. Only size and distance parameters are used.
+```{r accessibility_leaflet_3, echo=FALSE}
+# Create a continuous palette function
+pal <- colorQuantile(
+  palette = "Greens",
+  domain = c(0, tracts$park_ls4)
+)
+
+pop_content <- function(shp){
+  paste0(
+    "Tract: ", shp$NAME, "<br/>",
+    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
+    "Park Access: ", round(shp$park_ls4, 2), "<br/>"
+  )
+}
+
+leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(weight = 1, popup = ~pop_content(tracts),
+              color = ~pal(park_ls4))
+```
+
+And here is a map of accessibility using size, distance and tweet parameters (with the combination of betas that is most likely for physical activity as the DV).
+```{r accessibility_leaflet_4, echo=FALSE}
+# Create a continuous palette function
+pal <- colorQuantile(
+  palette = "Greens",
+  domain = c(0, tracts$park_ls5)
+)
+
+pop_content <- function(shp){
+  paste0(
+    "Tract: ", shp$NAME, "<br/>",
+    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
+    "Park Access: ", round(shp$park_ls5, 2), "<br/>"
+  )
+}
+
+leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(weight = 1, popup = ~pop_content(tracts),
+              color = ~pal(park_ls5))
+```
+
+```{r accessibility_leaflet_X, echo=FALSE, eval=FALSE}
+# Create a continuous palette function
+pal <- colorQuantile(
+  palette = "Greens",
+  domain = c(0, tracts$park_ls3)
+)
+
+pop_content <- function(shp){
+  paste0(
+    "Tract: ", shp$NAME, "<br/>",
+    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
+    "Park Access: ", round(shp$park_ls3, 2), "<br/>"
+  )
+}
+
+leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(weight = 1, popup = ~pop_content(tracts),
+              color = ~pal(park_ls3))
+```
+
+
+```{r obese_lm, echo=FALSE, message=FALSE, include=FALSE}
+base_formula <- formula(~log(Pop_Density) + FulltimeWork + 
+    CollegeDeg + Single_Percent + PctWhite + PctBlack + PctAsian + PctOther + PctHispanic)
+base_formula_age <- formula(~log(Pop_Density) + FulltimeWork + 
+    CollegeDeg + Single_Percent + Pct18to29 + Pct30to64 + Pct65plus + PctWhite + PctBlack + PctAsian + PctOther + PctHispanic)
+
+parks_formula_1 <- update(base_formula, . ~ . + log(park_ls1))
+parks_formula_1a <- update(base_formula_age, . ~ . + log(park_ls1))
+parks_formula_2 <- update(base_formula, . ~ . + log(park_ls2))
+parks_formula_2a <- update(base_formula_age, . ~ . + log(park_ls2))
+parks_formula_3 <- update(base_formula, . ~ . + log(park_ls4))
+parks_formula_3a <- update(base_formula_age, . ~ . + log(park_ls4))
+parks_formula_4 <- update(base_formula, . ~ . + log(park_ls5))
+parks_formula_4a <- update(base_formula_age, . ~ . + log(park_ls5))
+
+
+#parks_formula_3 <- update(base_formula, . ~ . + park_ls3)
+```
+
+
+Create a spatial weights matrix:
+
+```{r W, echo=FALSE}
+neighbors <- poly2nb(tracts, queen = FALSE)
+W <- nb2listw(neighbours = neighbors, zero.policy = TRUE)
+print(W, zero.policy = TRUE)
+```
+
+
+Estimate SDM models for the `OBESITY` variable. Model 1 does not include park access. Models 2 & 3 each use a different park access variable with a different combination of parameters:
+
+```{r spmodels obesity, echo=FALSE}
+obese_sdm <- lagsarlm(update(base_formula, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdm2 <- lagsarlm(update(parks_formula_1, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdm3 <- lagsarlm(update(parks_formula_2, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdem <- errorsarlm(update(base_formula, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+obese_sdem2 <- errorsarlm(update(parks_formula_1, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+obese_sdem3 <- errorsarlm(update(parks_formula_2, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+#obese_sdm_4 <- lagsarlm(update(parks_formula_3, OBESITY ~ .), data = tracts@data, 
+                      #listw = W, zero.policy = TRUE, type = "mixed")
+```
+
+```{r spmodels obesity with age, echo=FALSE}
+obese_sdm_age <- lagsarlm(update(base_formula_age, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdm2_age <- lagsarlm(update(parks_formula_1a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdm3_age <- lagsarlm(update(parks_formula_2a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, type = "mixed")
+obese_sdem_age <- errorsarlm(update(base_formula_age, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+obese_sdem2_age <- errorsarlm(update(parks_formula_1a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+obese_sdem3_age <- errorsarlm(update(parks_formula_2a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+
+```
+
+Estimate SDM models for the `Phys_Act` variable. Model 1 does not include park access. Models 2-4 each use a different park access variable with a different combination of parameters:
+
+```{r spmodels physact, echo=FALSE}
+physact_sdm <- lagsarlm(update(base_formula, Phys_Act ~ .), data = tracts@data, 
+                        listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm2 <- lagsarlm(update(parks_formula_1, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm3 <- lagsarlm(update(parks_formula_2, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdem <- errorsarlm(update(base_formula, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem2 <- errorsarlm(update(parks_formula_1, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem3 <- errorsarlm(update(parks_formula_2, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+#physact_sdm4 <- lagsarlm(update(parks_formula_3, Phys_Act ~ .), data = tracts@data,
+                         #listw = W, zero.policy = TRUE, type = "mixed")
+```
+
+```{r spmodels physact with age, echo=FALSE}
+physact_sdm_age <- lagsarlm(update(base_formula_age, Phys_Act ~ .), data = tracts@data, 
+                        listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm2_age <- lagsarlm(update(parks_formula_1a, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm3_age <- lagsarlm(update(parks_formula_2a, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdem_age <- errorsarlm(update(base_formula_age, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem2_age <- errorsarlm(update(parks_formula_1a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem3_age <- errorsarlm(update(parks_formula_2a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+
+```
+
+```{r spmodels physact new betas, echo=FALSE}
+physact_sdm_new <- lagsarlm(update(base_formula, Phys_Act ~ .), data = tracts@data, 
+                        listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm2_new <- lagsarlm(update(parks_formula_3, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm3_new <- lagsarlm(update(parks_formula_4, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdem_new <- errorsarlm(update(base_formula, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem2_new <- errorsarlm(update(parks_formula_3, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem3_new <- errorsarlm(update(parks_formula_4, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+```
+
+```{r spmodels physact age new betas, echo=FALSE}
+physact_sdm_new_age <- lagsarlm(update(base_formula_age, Phys_Act ~ .), data = tracts@data, 
+                        listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm2_new_age <- lagsarlm(update(parks_formula_3a, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdm3_new_age <- lagsarlm(update(parks_formula_4a, Phys_Act ~ .), data = tracts@data,
+                         listw = W, zero.policy = TRUE, type = "mixed")
+physact_sdem_new_age <- errorsarlm(update(base_formula_age, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem2_new_age <- errorsarlm(update(parks_formula_3a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+physact_sdem3_new_age <- errorsarlm(update(parks_formula_4a, OBESITY ~ .), data = tracts@data, 
+                      listw = W, zero.policy = TRUE, etype = "emixed",tol.solve = 1e-16)
+```
+Compare the models with `htmlreg()` in
+the html output. First, the obesity models. The first table does not include the age variables.
+
+```{r obesitysummary, results="asis", echo=FALSE}
+obesity_models <- list(obese_sdm, obese_sdm2, obese_sdm3, obese_sdem, obese_sdem2, obese_sdem3)
+names(obesity_models) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(obesity_models, digits = 4)
+htmlreg(obesity_models, caption = "NYC: SDM & SDEM Models of Obesity Prevalence")
+```
+
+```{r obesitysummaryage, results="asis", echo=FALSE}
+obesity_models_age <- list(obese_sdm_age, obese_sdm2_age, obese_sdm3_age, obese_sdem_age, obese_sdem2_age, obese_sdem3_age)
+names(obesity_models_age) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(obesity_models, digits = 4)
+htmlreg(obesity_models_age, caption = "NYC: SDM & SDEM Models of Obesity Prevalence")
+```
+
+Estimate the impacts for `obese_sdm`.
+```{r obese_sdm_impacts}
+
+listw <- as(W, "CsparseMatrix")
+trMC <- trW(listw, type="MC")
+set.seed(1)
+summary(impacts(obese_sdm, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `obese_sdm_age`.
+```{r obese_sdm_age_impacts}
+
+listw <- as(W, "CsparseMatrix")
+trMC <- trW(listw, type="MC")
+set.seed(1)
+summary(impacts(obese_sdm_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `obese_sdm2`.
+```{r obese_sdm2_impacts}
+
+summary(impacts(obese_sdm2, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `obese_sdm2_age`.
+```{r obese_sdm2_age_impacts}
+
+summary(impacts(obese_sdm2_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `obese_sdm3`.
+```{r obese_sdm3_impacts}
+
+summary(impacts(obese_sdm3, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `obese_sdm3_age`.
+```{r obese_sdm3_age_impacts}
+
+summary(impacts(obese_sdm3_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Next, the physical activity models. Again, the first table does not contain the age variables. The third and fourth tables use new beta parameters.
+
+```{r physactsummary, results="asis", echo=FALSE}
+physact_models <- list(physact_sdm, physact_sdm2, physact_sdm3, physact_sdem, physact_sdem2, physact_sdem3)
+names(physact_models) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(physact_models)
+htmlreg(physact_models, caption = "NYC: SDM Models of Physical Activity Participation")
+```
+
+```{r physactsummaryage, results="asis", echo=FALSE}
+physact_models_age <- list(physact_sdm_age, physact_sdm2_age, physact_sdm3_age, physact_sdem_age, physact_sdem2_age, physact_sdem3_age)
+names(physact_models_age) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(physact_models)
+htmlreg(physact_models_age, caption = "NYC: SDM Models of Physical Activity Participation")
+```
+
+The following two tables use a size beta of 0.00001 and a distance beta of -15.
+```{r physact new betas, results="asis", echo=FALSE}
+physact_models_new <- list(physact_sdm_new, physact_sdm2_new, physact_sdm3_new, physact_sdem_new, physact_sdem2_new, physact_sdem3_new)
+names(physact_models_new) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(physact_models)
+htmlreg(physact_models_new, caption = "NYC: SDM Models of Physical Activity Participation")
+
+```
+
+```{r physact new betas with age, results="asis", echo=FALSE}
+physact_models_new_age <- list(physact_sdm_new_age, physact_sdm2_new_age, physact_sdm3_new_age, physact_sdem_new_age, physact_sdem2_new_age, physact_sdem3_new_age)
+names(physact_models_new_age) <-  paste(c("SDM No Parks", "SDM Size & Distance", "SDM Size, Distance, Tweets", "SDEM 1", "SDEM 2", "SDEM 3"))
+#screenreg(physact_models)
+htmlreg(physact_models_new_age, caption = "NYC: SDM Models of Physical Activity Participation")
+
+
+```
+
+Estimate the impacts for `physact_sdm`.
+```{r physact_sdm_impacts}
+
+summary(impacts(physact_sdm, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm_age`.
+```{r physact_sdm_age_impacts}
+
+summary(impacts(physact_sdm_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm2`.
+```{r physact_sdm2_impacts}
+
+summary(impacts(physact_sdm2, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm2_age`.
+```{r physact_sdm2_age_impacts}
+
+summary(impacts(physact_sdm2_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm3`.
+```{r physact_sdm3_impacts}
+
+summary(impacts(physact_sdm3, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm3_age`.
+```{r physact_sdm3_age_impacts}
+
+summary(impacts(physact_sdm3_age, tr=trMC, R=1000), zstats=TRUE)
+
+```
+
+Estimate the impacts for `physact_sdm3_new_age`.
+```{r physact_sdm3_new_age_impacts}
+
+summary(impacts(physact_sdm3_new_age, tr = trMC, R = 1000), zstats=TRUE)
+
+```
