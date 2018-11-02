@@ -80,6 +80,31 @@ parks_sf <- st_read("nyc_parks.geojson") %>%
 #plot(parks)
 ```
 
+The Tweets count variable has a high degree of zeros (virtually all parks have
+no tweets originating there). We should identify if there is a transformation
+that will make the distribution more normal (log is typical), but that will allow
+for zero variables as $log(0)$ is undefined.
+
+
+```{r tweettransformation}
+parks_sf %>%
+  st_set_geometry(NULL) %>%
+  tbl_df() %>%
+  select(raw = TWEET_COUNT) %>%
+  mutate(
+    `0.5` = yeo.johnson(raw, 0.5),
+    `0` = yeo.johnson(raw, 0),
+    log = log(raw + 1)
+  ) %>%
+  sample_n(200) %>%
+  gather(lambda, x, -raw) %>%
+  ggplot(aes(x = raw, y = x, color = lambda)) + 
+  geom_point()
+```
+
+
+
+
 ```{r show_data, echo=FALSE}
 tracts@data <- tbl_df(tracts@data) %>%
   select(
@@ -145,123 +170,84 @@ calculate_park_logsums <- function(tracts, parks, distances, sizes, tweets = NUL
 ```
 
 
-Calculate the logsum given a tracts and parks dataset. `tracts$park_ls1` uses
-only size and distance parameters. `tracts$park_ls2` uses size, distance and
-tweet parameters. `tracts$park_ls4` and `tracts$park_ls5` use a distance
-parameter of -15.
-```{r accessibility}
+```{r distancematrix}
 # calculate centroids of tracts and parks
 tract_centroids <- gCentroid(tracts, byid = TRUE) 
 park_centroids <- gCentroid(parks, byid = TRUE)
 
 # distances from all tracts to all zones
 distances <- gDistance(park_centroids, tract_centroids, byid = TRUE) / 5280
+```
 
+Calculate the logsum given a tracts and parks dataset. `tracts$park_ls1` uses
+only size and distance parameters. `tracts$park_ls2` uses size, distance and
+tweet parameters. `tracts$park_ls4` and `tracts$park_ls5` use a distance
+parameter of -15.
+
+We need to firm up these calculations. Are we using log of acres as well?
+
+```{r logsums}
 tracts$park_ls1 <- calculate_park_logsums(tracts, parks, distances,
                                           parks$Park_Acres, betas = c(.00001, -5))
 
-tracts$park_ls2 <- calculate_park_logsums(tracts, parks, distances, 
-                                          parks$Park_Acres, parks$TWEET_COUNT, 
-                                          betas = c(.00001, -5, .001))
+tracts$park_ls2 <- calculate_park_logsums(tracts, parks, distances,
+                                          parks$Park_Acres,
+                                          yeo.johnson(parks$TWEET_COUNT, 0),
+                                          betas = c(.00001, -5, 2))
 
-tracts$park_ls4 <- calculate_park_logsums(tracts, parks, distances, 
+tracts$park_ls4 <- calculate_park_logsums(tracts, parks, distances,
                                           parks$Park_Acres, betas = c(.00001, -15))
 
-tracts$park_ls5 <- calculate_park_logsums(tracts, parks, 
-                                          parks$Park_Acres, parks$TWEET_COUNT, 
-                                          betas = c(.00001, -15, .001))
+tracts$park_ls5 <- calculate_park_logsums(tracts, parks, distances,
+                                          parks$Park_Acres,
+                                          yeo.johnson(parks$TWEET_COUNT, 0),
+                                          betas = c(.00001, -15, 2))
+```
+
+
+I'm interested in looking at the distribution of the log-sum statistics so we can
+know what if anything the different variables are doing, also to make sure that
+there is no missingness in the data. 
+
+  - `ls1` and `ls2` have virtually the same distribution, along with `ls4` and
+  `ls5`. This suggests that tweets have virtually no effect on the rankings, at
+  least in this iteration.
+
+```{r distribution}
+logsums <- tracts@data %>%
+  select(park_ls1:park_ls6) %>%
+  gather(logsum_type, value)
+
+# check missingness
+table(is.na(logsums$value))
+
+# histogram
+ggplot(logsums, aes(x = value, fill = logsum_type)) + geom_histogram()
 ```
 
 
 Map the newly created Park Access variables. Here is a map of accessibility using only the size and distance parameters that are most likely when using obesity as the dependent variable.
 ```{r accessibility_leaflet_1, echo=FALSE}
 # Create a continuous palette function
-pal <- colorQuantile(
-  palette = "Greens",
-  domain = c(0, tracts$park_ls1)
-)
+pal1 <- colorQuantile(palette = "Greens", domain = tracts$park_ls1)
+pal2 <- colorQuantile(palette = "Greens", domain = tracts$park_ls2)
+pal4 <- colorQuantile(palette = "Greens", domain = tracts$park_ls4)
+pal5 <- colorQuantile(palette = "Greens", domain = tracts$park_ls5)
 
-pop_content <- function(shp){
-  paste0(
-    "Tract: ", shp$NAME, "<br/>",
-    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
-    "Park Access: ", round(shp$park_ls1, 2), "<br/>"
-  )
-}
 
 leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(weight = 1, popup = ~pop_content(tracts),
-              color = ~pal(park_ls1))
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(group = "Long distance, no tweets", weight = 1, color = ~pal1(park_ls1)) %>%
+  addPolygons(group = "Long distance, tweets", weight = 1, color = ~pal2(park_ls2)) %>%
+  addPolygons(group = "Short distance, no tweets", weight = 1, color = ~pal4(park_ls4)) %>%
+  addPolygons(group = "Short distance, tweets", weight = 1, color = ~pal5(park_ls5)) %>%
+  addLayersControl(baseGroups =  c("Short distance, no tweets", 
+                                   "Short distance, tweets", 
+                                   "Long distance, no tweets", 
+                                   "Long distance, tweets"))
 ```
 
-And here is a map of accessibility using the size, distance and tweet parameters (using obesity as the DV). 
-```{r accessibility_leaflet_2, echo=FALSE}
-# Create a continuous palette function
-pal <- colorQuantile(
-  palette = "Greens",
-  domain = c(0, tracts$park_ls2)
-)
-
-pop_content <- function(shp){
-  paste0(
-    "Tract: ", shp$NAME, "<br/>",
-    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
-    "Park Access: ", round(shp$park_ls2, 2), "<br/>"
-  )
-}
-
-leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(weight = 1, popup = ~pop_content(tracts),
-              color = ~pal(park_ls2))
-```
-
-Here is a map of accessibility using the betas that produce the most likely model when using physical activity as the dependent variable. Only size and distance parameters are used.
-```{r accessibility_leaflet_3, echo=FALSE}
-# Create a continuous palette function
-pal <- colorQuantile(
-  palette = "Greens",
-  domain = c(0, tracts$park_ls4)
-)
-
-pop_content <- function(shp){
-  paste0(
-    "Tract: ", shp$NAME, "<br/>",
-    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
-    "Park Access: ", round(shp$park_ls4, 2), "<br/>"
-  )
-}
-
-leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(weight = 1, popup = ~pop_content(tracts),
-              color = ~pal(park_ls4))
-```
-
-And here is a map of accessibility using size, distance and tweet parameters (with the combination of betas that is most likely for physical activity as the DV).
-```{r accessibility_leaflet_4, echo=FALSE}
-# Create a continuous palette function
-pal <- colorQuantile(
-  palette = "Greens",
-  domain = c(0, tracts$park_ls5)
-)
-
-pop_content <- function(shp){
-  paste0(
-    "Tract: ", shp$NAME, "<br/>",
-    "% Park: ", round(shp$Park_Percent, 2), "<br/>",
-    "Park Access: ", round(shp$park_ls5, 2), "<br/>"
-  )
-}
-
-leaflet(tracts %>% spTransform(., CRS("+init=epsg:4326"))) %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(weight = 1, popup = ~pop_content(tracts),
-              color = ~pal(park_ls5))
-```
-
-
+A
 Create regression formulas:
 ```{r obese_lm, echo=FALSE, message=FALSE, include=FALSE}
 #base_formula <- formula(~log(Pop_Density) + FulltimeWork + 
@@ -269,14 +255,10 @@ Create regression formulas:
 base_formula_age <- formula(~log(Pop_Density) + FulltimeWork + 
     CollegeDeg + Single_Percent + Pct0to17 + Pct18to29 + Pct30to64 + Pct65plus + PctWhite + PctBlack + PctAsian + PctOther + PctHispanic)
 
-#parks_formula_1 <- update(base_formula, . ~ . + log(park_ls1 + 0.1))
-parks_formula_1a <- update(base_formula_age, . ~ . + log(park_ls1 + 0.1))
-#parks_formula_2 <- update(base_formula, . ~ . + log(park_ls2 + 0.1))
-parks_formula_2a <- update(base_formula_age, . ~ . + log(park_ls2 + 0.1))
-#parks_formula_3 <- update(base_formula, . ~ . + log(park_ls4 + 0.01))
-parks_formula_3a <- update(base_formula_age, . ~ . + log(park_ls4 + 5))
-#parks_formula_4 <- update(base_formula, . ~ . + log(park_ls5 + 0.1))
-parks_formula_4a <- update(base_formula_age, . ~ . + log(park_ls5 + 5))
+parks_formula_1a <- update(base_formula_age, . ~ . + park_ls1 )
+parks_formula_2a <- update(base_formula_age, . ~ . + park_ls2 )
+parks_formula_3a <- update(base_formula_age, . ~ . + park_ls4 )
+parks_formula_4a <- update(base_formula_age, . ~ . + park_ls5 )
 
 ```
 
