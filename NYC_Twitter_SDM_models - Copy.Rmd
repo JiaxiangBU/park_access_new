@@ -98,22 +98,78 @@ parks@data
 ```
 
 
-Calculate the logsum given a tracts and parks dataset. `tracts$park_ls1` uses only size and distance parameters. `tracts$park_ls2` uses size, distance and tweet parameters. `tracts$park_ls4` and `tracts$park_ls5` use a distance parameter of -15.
+Instead of keeping those functions in separate scripts, we are going to put
+everything right here in the document.
+
+
+```{r logsumfunction}
+
+#' Calculate destination choice logsums from a distance matrix
+#' 
+#' @param tracts A spatial points dataframe containing $n$
+#'   tract geographic information and their attributes.
+#' @param parks A spatial points dataframe containing $p$
+#'   park geographic information and their attributes.
+#' @param distances An $n\times p$ matrix with the distance from all tracts to
+#'   all parks in miles.
+#' @param sizes A p-length vector of park sizes
+#' @param tweets A p-length vector of tweets at parks
+#' @param betas A vector containing the size, distance, and tweet coefficients. 
+#'   If we submit two variables the tweets are ignored.
+#'   
+#' @return An n-length vector containing the weighted log-sum based
+#'   accessibility between a tract and all parks.
+#' @details If we have n tracts and p parks, distances needs to be a 
+#' 
+calculate_park_logsums <- function(tracts, parks, distances, sizes, tweets = NULL,
+                                   betas = c(.00001, -15, .001)){
+  
+  # A is n x p
+  a <- betas[2] * distances 
+  
+  # B is p x 1
+  b <- betas[1] * sizes
+  
+  if(!is.null(tweets)) 
+    b <- b + betas[3] * tweets
+  
+  # calculate observed utility by adding the weighted park-level attributes 
+  # to the columns of the matrix
+  # V is n x p, with b added by-column to each element in a
+  V <- sweep(a, MARGIN = 2, b, `+`)
+  
+  # log-sum of exponentiated utility, Output is n-length vector
+  log(rowSums(exp(V)))
+  
+}
+```
+
+
+Calculate the logsum given a tracts and parks dataset. `tracts$park_ls1` uses
+only size and distance parameters. `tracts$park_ls2` uses size, distance and
+tweet parameters. `tracts$park_ls4` and `tracts$park_ls5` use a distance
+parameter of -15.
 ```{r accessibility}
-source('size00001dist5.R', echo=TRUE)
-tracts$park_ls1 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5))
+# calculate centroids of tracts and parks
+tract_centroids <- gCentroid(tracts, byid = TRUE) 
+park_centroids <- gCentroid(parks, byid = TRUE)
 
-source('size00001dist5tweet001.R', echo=TRUE)
-tracts$park_ls2 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5, .001))
+# distances from all tracts to all zones
+distances <- gDistance(park_centroids, tract_centroids, byid = TRUE) / 5280
 
-#source('size00001dist5tweetneg001.R', echo=TRUE)
-#tracts$park_ls3 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -5, -.001))
+tracts$park_ls1 <- calculate_park_logsums(tracts, parks, distances,
+                                          parks$Park_Acres, betas = c(.00001, -5))
 
-source('size00001dist15.R', echo=TRUE)
-tracts$park_ls4 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -15))
+tracts$park_ls2 <- calculate_park_logsums(tracts, parks, distances, 
+                                          parks$Park_Acres, parks$TWEET_COUNT, 
+                                          betas = c(.00001, -5, .001))
 
-source('size00001dist15tweet001.R', echo=TRUE)
-tracts$park_ls5 <- calculate_park_logsums(tracts, parks, betas = c(.00001, -15, .001))
+tracts$park_ls4 <- calculate_park_logsums(tracts, parks, distances, 
+                                          parks$Park_Acres, betas = c(.00001, -15))
+
+tracts$park_ls5 <- calculate_park_logsums(tracts, parks, 
+                                          parks$Park_Acres, parks$TWEET_COUNT, 
+                                          betas = c(.00001, -15, .001))
 ```
 
 
