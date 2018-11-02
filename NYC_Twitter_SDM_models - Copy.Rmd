@@ -5,6 +5,8 @@ date: "August 10, 2017"
 output: html_document
 ---
 
+This document contains the model estimation and impacts results for the paper.
+
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
 library(geojsonio)
@@ -15,28 +17,84 @@ library(rgeos)
 library(spdep)
 library(texreg)
 library(leaflet)
+library(sf)
 ```
 
+Nico cleaned the tracts dataset into a geoJSON file stored in the repository. We
+should read it in twice because the sf library is better for visualization but
+spdep still requires sp objects for now.
 
-```{r read_tracts, echo=FALSE}
+```{r read_tracts}
 tracts <- geojson_read("nyc_tracts.geojson", what = "sp")
-#plot(tracts)
+tracts_sf <- st_read("nyc_tracts.geojson", quiet = TRUE) %>%
+  st_transform(4326)
 ```
+
+
+## Complete Cases
+We noticed that our models had different numbers of observations / degrees of 
+freedom. Obviously we need to have comparable econometric models. The first thing
+we want to look for is missingness in the tracts variables, and which tracts
+are missing those variables. The map below shows the tracts that are missing
+this information.
+
+```{r tracts_with_missing}
+# identify complete cases
+complete_tracts_index <- tracts_sf %>%
+  st_set_geometry(NULL) %>%
+  tbl_df() %>%
+  complete.cases()
+
+# make a map of 
+leaflet( tracts_sf[!complete_tracts_index, ]) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik) %>% 
+  addPolygons(label = ~ as.character(GEOID))
+```
+
+These tracts seem to fall into two basic categories:
+
+  - Tracts outside of New York City that were clipped into the shape layer 
+  and remain as edge remnants. It is generally better to select by FIPS code rather
+  than geometric operations, but we can just discard these at this point and
+  they will not affect anything.
+  
+  - Tracts that are completely occupied by parks, airports, or other pieces
+  of non-residential infrastructure. 
+  
+The exceptions to this appear to be 3606100940 and 36061010200 in Midtown between
+5th Avenue and Park Avenue. Greg will assume for this analysis that these are 
+entirely commercial tracts and therefore have no residents, but Nico needs to 
+verify these.
+
+```{r complete_cases}
+tracts <- tracts[complete_tracts_index, ]
+```
+
+The parks data seems relatively complete, with the exception of a few variables
+that are missing everywhere. But we'll ignore this for now.
 
 ```{r read_parks, echo=FALSE}
 parks <- geojson_read("nyc_parks.geojson", what = "sp")
+parks_sf <- st_read("nyc_parks.geojson") %>%
+  st_transform(4326)
 #plot(parks)
 ```
 
 ```{r show_data, echo=FALSE}
 tracts@data <- tbl_df(tracts@data) %>%
-  select(GEOID, OBESITY, Park_Percent, Phys_Act, MENTAL, Income1, Income2, Income3, Income4, Income5, Income6, Income7, Income8, Income9, Income10, Pop_Density, FulltimeWork, CollegeDeg, Pct0to17, Pct18to29, Pct30to64, Pct65plus, Single_Percent, PctWhite, PctBlack, PctNative, PctAsian, PctPacific, PctOther, PctHispanic) %>%
-    mutate_each(funs(ifelse(is.na(.), 0, .)), Park_Percent)
+  select(
+    GEOID, OBESITY, Park_Percent, Phys_Act, MENTAL, 
+    Income1, Income2, Income3, Income4, Income5, Income6, 
+    Income7, Income8, Income9, Income10, Pop_Density, 
+    FulltimeWork, CollegeDeg, Pct0to17, Pct18to29, Pct30to64, Pct65plus, 
+    Single_Percent, PctWhite, PctBlack, PctNative, PctAsian, PctPacific,
+    PctOther, PctHispanic
+  ) 
 
 parks@data <- tbl_df(parks@data) 
 
 tracts@data
-#parks@data
+parks@data
 ```
 
 
