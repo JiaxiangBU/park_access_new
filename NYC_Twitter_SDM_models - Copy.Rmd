@@ -18,6 +18,7 @@ library(spdep)
 library(texreg)
 library(leaflet)
 library(sf)
+library(VGAM)
 ```
 
 Nico cleaned the tracts dataset into a geoJSON file stored in the repository. We
@@ -83,8 +84,9 @@ parks_sf <- st_read("nyc_parks.geojson") %>%
 The Tweets count variable has a high degree of zeros (virtually all parks have
 no tweets originating there). We should identify if there is a transformation
 that will make the distribution more normal (log is typical), but that will allow
-for zero variables as $log(0)$ is undefined.
-
+for zero variables as $log(0)$ is undefined. Using a Yeo-Johnson transformation
+with a lambda value of zero transforms the tweet count into a distribution
+asymptotically equivalent to log, and with zero values equal to zero.
 
 ```{r tweettransformation}
 parks_sf %>%
@@ -94,14 +96,13 @@ parks_sf %>%
   mutate(
     `0.5` = yeo.johnson(raw, 0.5),
     `0` = yeo.johnson(raw, 0),
-    log = log(raw + 1)
+    log = log(raw)
   ) %>%
   sample_n(200) %>%
   gather(lambda, x, -raw) %>%
   ggplot(aes(x = raw, y = x, color = lambda)) + 
-  geom_point()
+  geom_line()
 ```
-
 
 
 
@@ -202,6 +203,8 @@ tracts$park_ls5 <- calculate_park_logsums(tracts, parks, distances,
                                           parks$Park_Acres,
                                           yeo.johnson(parks$TWEET_COUNT, 0),
                                           betas = c(.00001, -15, 2))
+ls_names <- c("Short, no tweets",  "Short, tweets",  
+              "Long, no tweets",  "Long, tweets")
 ```
 
 
@@ -215,7 +218,7 @@ there is no missingness in the data.
 
 ```{r distribution}
 logsums <- tracts@data %>%
-  select(park_ls1:park_ls6) %>%
+  select(park_ls1:park_ls5) %>%
   gather(logsum_type, value)
 
 # check missingness
