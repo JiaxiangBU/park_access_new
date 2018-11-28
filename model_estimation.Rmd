@@ -1,0 +1,476 @@
+---
+title: "Model Estimation"
+output:
+  html_document:
+    df_print: paged
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup}
+library(geojsonio)
+library(tidyverse)
+library(maptools)
+library(rgdal)
+library(rgeos)
+library(spdep)
+library(texreg)
+library(leaflet)
+library(sf)
+library(VGAM)
+```
+
+
+# Data cleaning
+
+Nico cleaned the tracts dataset into a geoJSON file stored in the repository. We
+should read it in twice because the sf library is better for visualization but
+spdep still requires sp objects for now.
+
+```{r read_tracts}
+tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
+tracts_sf <- st_read("data/nyc_tracts.geojson", quiet = TRUE) %>%
+  st_transform(4326)
+```
+
+## Complete Cases
+We noticed that our models had different numbers of observations / degrees of 
+freedom. Obviously we need to have comparable econometric models. The first thing
+we want to look for is missingness in the tracts variables, and which tracts
+are missing those variables. The map below shows the tracts that are missing
+this information.
+
+```{r tracts_with_missing}
+# identify complete cases
+complete_tracts_index <- tracts_sf %>%
+  st_set_geometry(NULL) %>%
+  tbl_df() %>%
+  complete.cases()
+
+# make a map of 
+leaflet( tracts_sf[!complete_tracts_index, ]) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik) %>% 
+  addPolygons(label = ~ as.character(GEOID))
+```
+
+These tracts seem to fall into two basic categories:
+
+  - Tracts outside of New York City that were clipped into the shape layer 
+  and remain as edge remnants. It is generally better to select by FIPS code rather
+  than geometric operations, but we can just discard these at this point and
+  they will not affect anything.
+  
+  - Tracts that are completely occupied by parks, airports, or other pieces
+  of non-residential infrastructure. 
+  
+The exceptions to this appear to be 3606100940 and 36061010200 in Midtown between
+5th Avenue and Park Avenue. Greg will assume for this analysis that these are 
+entirely commercial tracts and therefore have no residents, but Nico needs to 
+verify these.
+
+```{r complete_cases}
+tracts <- tracts[complete_tracts_index, ]
+```
+
+
+
+
+
+The parks data seems relatively complete, with the exception of a few variables
+that are missing everywhere. But we'll ignore this for now.
+
+```{r read_parks, echo=FALSE}
+parks <- geojson_read("data/nyc_parks.geojson", what = "sp")
+```
+
+## Tweets Transformation
+
+The Tweets count variable has a high degree of zeros (virtually all parks have
+no tweets originating there). We should identify if there is a transformation
+that will make the distribution more normal (log is typical), but that will allow
+for zero variables as $log(0)$ is undefined. Using a Yeo-Johnson transformation
+with a lambda value of zero transforms the tweet count into a distribution
+asymptotically equivalent to log, and with zero values equal to zero.
+
+```{r tweettransformation}
+parks@data %>%
+  tbl_df() %>%
+  select(raw = TWEET_COUNT) %>%
+  filter(raw < 100) %>%
+  mutate(
+    `0.5` = yeo.johnson(raw, 0.5),
+    `0` = yeo.johnson(raw, 0),
+    log = log(raw)
+  ) %>%
+  gather(lambda, x, -raw) %>%
+  ggplot(aes(x = raw, y = x, color = lambda)) + 
+  geom_line()
+```
+
+
+```{r show_data, echo=FALSE}
+tracts@data <- tbl_df(tracts@data) %>%
+  select(
+    GEOID, OBESITY, Park_Percent, Phys_Act, MENTAL, 
+    Income1, Income2, Income3, Income4, Income5, Income6, 
+    Income7, Income8, Income9, Income10, Pop_Density, 
+    FulltimeWork, CollegeDeg, Pct0to17, Pct18to29, Pct30to64, Pct65plus, 
+    Single_Percent, PctWhite, PctBlack, PctNative, PctAsian, PctPacific,
+    PctOther, PctHispanic
+  ) 
+
+parks@data <- tbl_df(parks@data) 
+```
+
+# Spatial Model Selection
+
+Deciding which spatial model to select is an empirical question as outlined by
+both LeSage and Pace (2010?) and Macfarlane et al. (2015) We estimate a model
+without park accessibility to determine which spatial structure is correct
+for our analysis.
+
+We assert a first-order queen adjacency neighbors matrix, which is
+row-standardized such that the total weight of each row in the matrix sums to 1.
+There are three tracts in the data that have no adjacent neighbors, meaning that 
+these tracts will have no spatial spillover effects.
+
+```{r W, echo=FALSE}
+neighbors <- poly2nb(tracts, queen = TRUE)
+W <- nb2listw(neighbours = neighbors, zero.policy = TRUE, style = "W")
+print(W, zero.policy = TRUE)
+trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
+ev <- eigenw(W)
+```
+
+The base model regresses the obesity rate in the tract against covariates for
+work status and educational attainment, minority and young/elderly population, 
+and marital status.
+
+```{r obese_lm, echo=FALSE, message=FALSE, include=FALSE}
+base_formula <- formula( 
+  ~ log(Pop_Density) + 
+    FulltimeWork + CollegeDeg + Single_Percent + 
+    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
+    PctBlack + PctAsian + PctOther + PctHispanic)
+```
+
+We estimate four models with this regression specification:
+
+  - Ordinary least squares
+  - Spatial autoregressive
+  - Spatial error
+  - Spatial Durbin
+  
+  
+```{r spatial selection}
+obese_base_lm <- lm(update(base_formula, OBESITY ~ .), data = tracts@data)
+obese_base_sar <- lagsarlm(update(base_formula, OBESITY ~ .), 
+                           data = tracts@data, listw = W, zero.policy = TRUE)
+obese_base_sem <- errorsarlm(update(base_formula, OBESITY ~ .), 
+                             data = tracts@data, listw = W, zero.policy = TRUE)
+obese_base_sdm <- lagsarlm(update(base_formula, OBESITY ~ .), 
+                           data = tracts@data, listw = W, zero.policy = TRUE, 
+                           type = "mixed")
+```
+
+
+A likelihood ratio test reveals that the SEM is not preferred, so we use the SDM
+only going forward.
+
+```{r lrtest}
+lmtest::lrtest(obese_base_sem, obese_base_sdm)
+```
+
+
+# Logsum Calculation
+
+
+
+Consider that an individual is choosing a park for a recreation activity.
+According to basic choice theory (Mcfadden 1974), the probability of choosing
+park $p$ from the set of all regional parks $J$ is:
+
+$$ P(p | V_p) = \frac{\exp(V_p)}{\sum_{j \in J}\exp(V_j)}$$
+where parks are differentiated from each other by their relative measurable
+utilitie $V$. In principle, $V$ may include any measurable attributes of either
+the choice maker or the park. In this study we use a linear formulation of
+
+$$V_{ij} = size_j\beta_s + distance_{ij}\beta_d$$
+incorporating the size of the park in acres and the distance of the park from
+the census tract $i$ in miles. The coefficients $\beta$ are typically estimated from 
+surveys, though in the absence of a survey we apply a maximum likelihood
+technique described below.
+
+A key theoretical understanding of random utility choice models is that the
+consumer surplus of the choice set can be otained as the log-sum of the
+denominator of the choice probability equation. In plainer terms, the *total value*
+of an individual's park accessibility is defined to be:
+
+$$CS_i = \ln\left({\sum_{j \in J}\exp(V_{ij})}\right)$$
+
+There are several advantages to a log-sum defined metric relative to
+buffer-based accessibility metrics more commonly found in the literature. First,
+all individuals are defined as having some access to all parks, rather than an
+arbitrary limit of 1/2 mile or so. This allows for the fact that some people are
+more or less sensitive to distances, and that distance is a continuous, and not
+a binary, phenomenon. Second, the random utility formulation allows the
+researcher to include any attribute of the park; in this case, we consider the
+size of the park as an element of accessibility. This suggests that not all
+parks are equal, and that a large park such as New York City's Central Park may
+provide health and activity benefits over a much larger area than a smaller
+community square.
+
+McFadden, D. (1974). The measurement of urban travel demand. Journal of public economics, 3(4), 303-328.
+
+In the absence of a park choice survey, we estimated likely values of the $\beta$ 
+coefficients by iteratively searching for the values which produced the highest
+model likelihood in *which model did we use to estimate likelihood?*. The search
+was constrained by two assertions. First, we required that the coefficient on
+size be positive and that on distance negative; all else equal, people will
+prefer to use larger parks that are nearer to their residence. Second, we visually
+inspected the resulting accessibility scores to ensure that the scores produced a 
+reasonably varied pattern of access throughout the metropolitan region.
+
+$$ A_i = log\sum_{j \in J}\exp(distance_{ij} \beta_d + size_j \beta_j + tweets_j \beta_t)$$
+We wrote a function to calculate this value for an arbitrary distance matrix, size
+and tweets vector, and coefficients.
+
+```{r logsums_function}
+
+#' Calculate destination choice logsums from a distance matrix
+#' 
+#' @param distances An $n\times p$ matrix with the distance from all tracts to
+#'   all parks in miles.
+#' @param sizes A p-length vector of park sizes
+#' @param tweets A p-length vector of tweets at parks
+#' @param betas A vector containing the size, distance, and tweet coefficients. 
+#'   If we submit two variables the tweets are ignored.
+#'   
+#' @return An n-length vector containing the weighted log-sum based
+#'   accessibility between a tract and all parks.
+#' @details If we have n tracts and p parks, distances needs to be a 
+#' 
+calculate_park_logsums <- function(distances, sizes, tweets = NULL,
+                                   betas = c(-15,.00001, .001)){
+  
+  # A is n x p
+  a <- betas[1] * distances 
+  
+  # B is p x 1
+  b <- betas[2] * sizes
+  
+  if(!is.null(tweets)) 
+    b <- b + betas[3] * tweets
+  
+  # calculate observed utility by adding the weighted park-level attributes 
+  # to the columns of the matrix
+  # V is n x p, with b added by-column to each element in a
+  V <- sweep(a, MARGIN = 2, b, `+`)
+  
+  # log-sum of exponentiated utility, Output is n-length vector
+  log(rowSums(exp(V)))
+  
+}
+```
+
+
+
+First, we calculate the distance between the tracts and the parks.
+```{r distancematrix}
+# calculate centroids of tracts and parks
+tract_centroids <- gCentroid(tracts, byid = TRUE) 
+park_centroids <- gCentroid(parks, byid = TRUE)
+
+# distances from all tracts to all zones
+distances <- gDistance(park_centroids, tract_centroids, byid = TRUE) / 5280
+```
+
+
+Now we want to generate an experiment where we supply different $\beta$ values
+to the logsum calculation in order to maximize the log-likelihood function of the
+regression model.
+
+## Model with tweets
+
+```{r tweets_logsum}
+tweets_logsum <- function(betas, distances, parks, tracts) {
+  
+  logsum <- calculate_park_logsums(
+    log(distances), 
+    log(parks$Park_Acres), 
+    yeo.johnson(parks$TWEET_COUNT, lambda = 0),
+    betas = betas
+  )
+  
+  estimation_data <- tracts@data %>% mutate(logsum = logsum)
+  
+  # sdm <- lagsarlm(
+  #   update(base_formula, OBESITY ~ . + logsum),   
+  #   data = estimation_data,  listw = W, zero.policy = TRUE, type = "mixed")
+  sdm <- lm(update(base_formula, OBESITY ~ . + logsum), data = estimation_data)
+  
+  return(-as.numeric(logLik(sdm)))
+}
+
+
+tweets_lm_val <- optim(fn = tweets_logsum, 
+                       par = c(-1, 0, 0), # distance, size, tweets
+                       lower = c(-Inf, 0, -Inf), # size coefficient must be positive
+                       upper = c(0, Inf, Inf), # distance coefficient must be negative
+                       hessian=TRUE, 
+                       distances = distances, parks = parks, tracts = tracts,
+                       method = "L-BFGS-B", control = list(trace = 6))
+```
+
+
+```{r tweets_sdm}
+tweets_ls <- calculate_park_logsums(
+    log(distances), 
+    log(parks$Park_Acres), 
+    yeo.johnson(parks$TWEET_COUNT, lambda = 0),
+    betas = tweets_lm_val$par)
+tracts$tweets_ls <- tweets_ls - mean(tweets_ls)
+tweets_sdm <- lagsarlm(update(base_formula, OBESITY ~ . + tweets_ls),  
+         data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+```
+
+
+## Model without Tweets
+
+
+```{r notweets_logsum}
+notweets_logsum <- function(betas, distances, parks, tracts) {
+  
+  logsum <- calculate_park_logsums(
+    log(distances), 
+    log(parks$Park_Acres), 
+    betas = betas
+  )
+  
+  estimation_data <- tracts@data %>% mutate(logsum = logsum)
+  
+  # sdm <- lagsarlm(
+  #   update(base_formula, OBESITY ~ . + logsum),   
+  #   data = estimation_data,  listw = W, zero.policy = TRUE, type = "mixed")
+  sdm <- lm(update(base_formula, OBESITY ~ . + logsum), data = estimation_data)
+  
+  return(-as.numeric(logLik(sdm)))
+}
+
+
+notweets_lm_val <- optim(fn = notweets_logsum, 
+                       par = c(-1, 0), # distance, size
+                       lower = c(-100, 0), # size coefficient must be positive
+                       upper = c(0, 100), # distance coefficient must be negative
+                       hessian=TRUE, 
+                       distances = distances, parks = parks, tracts = tracts,
+                       method = "L-BFGS-B", control = list(trace = 6))
+```
+
+
+```{r tweets_sdm}
+notweets_ls <- calculate_park_logsums( 
+  log(distances),  
+  log(parks$Park_Acres),  
+  betas = notweets_lm_val$par)
+
+tracts@data$notweets_ls <- notweets_ls - mean(notweets_ls)
+
+notweets_sdm <- lagsarlm(update(base_formula, OBESITY ~ . + notweets_ls),  
+         data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+```
+
+```{r modelchart}
+obesity_models <- list(Base = obese_base_sdm, `Access` = notweets_sdm, 
+                       `Access + Tweets` = tweets_sdm)
+screenreg(obesity_models, digits = 4)
+```
+
+
+
+```{r impacts_extractor}
+#' Get the MC simulated impact coefficients and significance from a model
+#' @param sdm An autoregressive lag (SAR or SDM) model object `lagsarlm`
+#' @return A data frame with the effect (direct, indirect, total), variable, 
+#'   simulated mean impact, and significance p-value
+impacts_extractor <- function(sdm) {
+  
+  impacts_summary <- summary(
+    impacts(sdm, tr=trMC,  R = 1000, useHESS = !is.logical(sdm$fdHess)), 
+    zstats = TRUE)
+  
+  coef <- list(
+    direct = impacts_summary$direct_sum,
+    indirect = impacts_summary$indirect_sum,
+    total = impacts_summary$total_sum
+  ) %>%
+  lapply(function(s) {
+    data_frame(
+      var = names(s$statistics[,1]),
+      impact = s$statistics[,1]
+    )
+  }) %>%
+    bind_rows(.id = "effect")
+  
+  pval <- as_data_frame(impacts_summary$pzmat) %>%
+    mutate(
+     var = rownames(impacts_summary$pzmat)
+    ) %>%
+    gather("effect", "p-val", -var) %>%
+    mutate(effect = tolower(effect))
+  
+  
+  left_join(coef, pval, by = c("effect", "var"))
+}
+```
+
+
+```{r obesity_impacts}
+obesity_impacts <- obesity_models %>%
+  lapply(impacts_extractor) %>%
+  bind_rows(.id = "model") %>%
+  transmute(
+    model, var, effect, 
+    output = paste(round(impact, 5), 
+                   gtools::stars.pval(`p-val`))
+  ) %>%
+  spread(model, output) 
+```
+
+
+
+# Physical Activity
+
+We cannot necessarily assume that the logsum parameter will be constructed the
+same way for physical activity as for obesity. (maybe?) But that's the assumption
+we'll make for now.
+
+```{r physact_estimation}
+# turn around the metric to make sense
+tracts$PHYSACT = 100 - tracts$Phys_Act
+pa_base_sdm <- lagsarlm(update(base_formula, PHYSACT ~ .),
+         data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+pa_notweets_sdm <- lagsarlm(update(base_formula, PHYSACT ~ . + notweets_ls),  
+          data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+pa_tweets_sdm <- lagsarlm(update(base_formula, PHYSACT ~ . + tweets_ls),  
+          data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+```
+
+```{r physact_models}
+physact_models <- list(Base = pa_base_sdm, Access = pa_notweets_sdm, 
+                       `Access + Tweets` = pa_tweets_sdm)
+screenreg(physact_models, digits = 4)
+```
+
+
+```{r physact_impacts}
+physact_impacts <- physact_models %>%
+  lapply(impacts_extractor) %>%
+  bind_rows(.id = "model") %>%
+  transmute(
+    model, var, effect, 
+    output = paste(round(impact, 5), 
+                   gtools::stars.pval(`p-val`))
+  ) %>%
+  spread(model, output) 
+```
+
