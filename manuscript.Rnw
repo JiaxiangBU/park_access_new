@@ -1,0 +1,134 @@
+\documentclass[Afour,sageh,times]{sagej}
+\def\journalname{Submitted to Environment and Planning B: Urban Analytics and City Science}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+
+%% Front matter =========================
+\title{The impacts of park access on health outcomes: a spatial comprehensive approach}
+
+\author{Nico Boyd\affilnum{1}, Gregory S. Macfarlane\affilnum{2}, and Kari Watkins\affilnum{1}}
+\runninghead{Boyd, et al.}
+
+\affiliation{\affilnum{1}School of Civil and Environmental Engineering, Georgia Institute of Technology\\
+\affilnum{2}Civil and Environmental Engineering Department, Brigham Young University}
+
+\corrauth{Gregory Macfarlane\\
+430 Engineering Building\\
+Brigham Young University\\
+Provo, UT 84602\\
+USA}
+\begin{abstract}
+This research identifies the correlation between size and access to urban parks
+and physical activity and obesity outcomes at the neighborhood level. Proximity
+to parks is associated with increased physical activity and reduced obesity, but
+little research has been conducted on the relationship between accessibility to
+parks and health outcomes. Using data for three urban areas, we created a new
+measure for access to parks called ‘park choice accessibility.’ Park choice
+accessibility uses a gravity model to interact distance to parks and the quality
+of those parks as defined by their size. A small park very close to a
+neighborhood can have a major impact, but a larger park at a similar distance
+may have an even larger impact. Similarly, a large park can be further away and
+still have an impact on health outcomes. Using spatial econometric analysis, we
+assess whether park choice accessibility is associated with increased physical
+activity or decreased prevalence of obesity at the neighborhood level. The
+analysis controls for socioeconomic covariates such as age, marital status,
+income, and educational attainment.
+\end{abstract}
+
+
+\maketitle
+
+\section{Introduction}
+The United States is currently facing an epidemic of obesity and chronic
+diseases, which are non-communicable diseases of long duration and typically
+slow development, including cardiovascular diseases, chronic respiratory
+diseases, diabetes, stroke, joint and bone diseases, and cancer (World Health
+Organization 2014). Recent statistics suggest that approximately 300,000
+premature deaths each year can be attributed to chronic diseases (World Health
+Organization 2014). According to the Trust for Public Land, “On average, an
+obese American racks up nearly $1,500 more per year in health care costs than an
+American of normal weight, for a national total of $147 billion in direct
+medical expenses” (Harnik & Welle 2011). As obesity and chronic disease have
+become rampant, it is no surprise that healthcare costs have risen to nearly
+one-fifth of the United States’ gross domestic product (Harnik & Welle 2011).
+
+
+While a moderate amount of regular physical activity has been established as an
+effective strategy for reducing and managing obesity and many of the
+aforementioned chronic diseases (Office of Disease Prevention and Health
+Promotion 2008; Centers for Disease Control and Prevention 2009a; Durstine et
+al. 2013), Wolf notes that “more than 50 percent of U.S. adults do not get
+enough physical activity to provide health benefits; and 24 percent are not
+active at all in their leisure time. Activity decreases with age and sufficient
+activity is less common among women than men, and among those with lower incomes
+and less education” (?? 2008). Similarly, the United States Department of Health
+and Human Services notes that less than fifty-percent of Americans meet
+established recommendations for moderate to vigorous physical activity, or MVPA
+(U.S. DHHS 2010). As the epidemiological transition from infectious to chronic
+diseases is now complete in the developed world, increasing physical activity
+has become a vital public health task in the 21st century.
+
+Research has shown that the design of the built environment influences a range
+of behaviors, including those related to physical activity. The presence of
+trees and other vegetation in outdoor environments have been shown to be
+positively associated with physical activity (Pretty et al 2005); one finding
+suggests that after sidewalks and trails have been constructed, the introduction
+of natural elements positively impacts motivation to engage in physical activity
+(Suminski et al. 2005). Additional evidence indicates that commonly vegetated
+areas, such as parks and open space, support outdoor physical activity
+(Giles-Corti et al. 2005; Wells et al. 2007). Perhaps most telling is the
+finding that “people in large cities perceive themselves to be generally more
+healthy if a greater percentage of the living environment is greenspace, are
+inclined to be more active, and claim the ability to relax faster” (Wolf 2008).
+Thus, by providing space for active recreation, public parks and greenspaces may
+increase the likelihood of engaging in more physical activity. As such, public
+investment in parks can be thought of as a public health intervention for
+chronic diseases and conditions, as well as general population health.
+
+
+To date, the literature exploring the relationship between parks and health
+outcomes, specifically those related to physical activity and obesity, has
+yielded mixed results. Importantly, there is considerable variation in the
+design of past studies, including the spatial scale of analysis, the population
+of interest, and the measure of proximity and/or accessibility. While studies of
+neighborhood level health impacts do exist, they typically focus on discrete
+populations of interest within individual parks instead of examining the impacts
+of larger park networks. Other studies have used the city and metropolitan
+statistical area as the spatial scale of analysis, which in some cases has
+resulted in the discovery of positive associations between parks and health
+impacts but may conceal more nuanced relationships that exist at smaller spatial
+scales. Evaluating the health impacts of parks and greenspaces using a smaller
+unit of analysis is an important research gap to fill, especially considering
+that park use and physical activity within parks varies considerably according
+to residential proximity to parks and park facilities as well as a number of
+sociodemographic factors (Kaczynski et al. 2014). This study attempts to fill
+that gap using New York City as a case study example. Using a new measure of
+park access called ‘Park Choice Accessibility,’ we hypothesize that greater park
+access is associated with an increase in physical activity and a reduction in
+obesity at the census tract level.
+
+\section{Existing Literature}
+
+
+\section{Methodology}
+
+
+\subsection{Spatial weights selection}
+
+
+
+\section{Results}
+
+
+\section{Conclusion}
+
+
+\begin{funding}
+This project was funded in part via \ldots.
+\end{funding}
+
+\bibliographystyle{SageH}
+
+\end{document}
