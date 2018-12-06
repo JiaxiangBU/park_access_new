@@ -77,7 +77,7 @@ The parks data seems relatively complete, with the exception of a few variables
 that are missing everywhere. But we'll ignore this for now.
 
 ```{r read_parks, echo=FALSE}
-parks <- geojson_read("data/nyc_parks.geojson", what = "sp")
+parks <- sf::st_read("data/nyc_parks.geojson")
 ```
 
 ## Tweets Transformation
@@ -90,7 +90,7 @@ with a lambda value of zero transforms the tweet count into a distribution
 asymptotically equivalent to log, and with zero values equal to zero.
 
 ```{r tweettransformation}
-parks@data %>%
+parks %>%
   tbl_df() %>%
   dplyr::select(raw = TWEET_COUNT) %>%
   filter(raw < 100) %>%
@@ -104,7 +104,7 @@ parks@data %>%
   geom_line()
 
 
-parks@data <- parks@data %>%
+parks <- parks %>%
   mutate(
     log_size = log(Park_Acres),
     log_tweets = yeo.johnson(TWEET_COUNT, 0)
@@ -129,7 +129,6 @@ tracts@data <- tbl_df(tracts@data) %>%
     log_physact = log(100 - Phys_Act)
   )
 
-parks@data <- tbl_df(parks@data)
 ```
 
 # Spatial Model Selection
@@ -145,11 +144,12 @@ There are three tracts in the data that have no adjacent neighbors, meaning that
 these tracts will have no spatial spillover effects.
 
 ```{r W, echo=FALSE}
-neighbors <- poly2nb(tracts, queen = TRUE)
-W <- nb2listw(neighbours = neighbors, zero.policy = TRUE, style = "W")
+tracts.dnn <- dnearneigh(gCentroid(tracts, byid = TRUE), 0, 1.8 * 5280)
+dists <- nbdists(tracts.dnn, gCentroid(tracts, byid = TRUE))
+dists.inv <- lapply(dists, function(x) 1 / x)
+W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv, zero.policy = TRUE, style = "W")
 print(W, zero.policy = TRUE)
 trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
-ev <- eigenw(W)
 ```
 
 The base model regresses the obesity rate in the tract against covariates for
@@ -190,6 +190,31 @@ only going forward.
 ```{r lrtest}
 lmtest::lrtest(obese_base_sem, obese_base_sdm)
 ```
+
+The residuals appear homoskedastic with few outliers.
+
+```{r residuals}
+tracts_sf <- tracts_sf[complete_tracts_index, ] %>%
+  mutate(
+    log_obesity = tracts$log_obesity,  
+    obese_base_lm_residuals = obese_base_lm$residuals,
+    obese_base_sdm_fitted = obese_base_sdm$fitted.values,  
+    obese_base_sdm_residuals = obese_base_sdm$residual
+  ) 
+
+ggplot(tracts_sf, aes(x = log_obesity, y = obese_base_sdm_fitted)) + 
+  geom_point()
+```
+
+The residuals also appear to be distributed wtihout serious spatial correlation
+```{r residuals_map}
+pal <- colorQuantile("BrBG", tracts_sf$obese_base_sdm_residuals, n = 9)
+leaflet(tracts_sf) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(color = ~pal(obese_base_sdm_residuals), stroke = NA, opacity = 0.8)
+```
+
+
 
 # Logsum Calculation
 
@@ -263,7 +288,7 @@ calculate_park_logsums <- function(distances, sizes, tweets = NULL,
                                    betas = c(-15,.00001, .001)){
   
   # A is n x p
-  a <- betas[1] * distances 
+  a <- betas[1] * distances
   
   # B is p x 1
   b <- betas[2] * sizes
@@ -274,7 +299,7 @@ calculate_park_logsums <- function(distances, sizes, tweets = NULL,
   # calculate observed utility by adding the weighted park-level attributes 
   # to the columns of the matrix
   # V is n x p, with b added by-column to each element in a
-  V <- sweep(a, MARGIN = 2, b, `+`)
+  V <- sweep(a, 2, b, `+`)
   
   # log-sum of exponentiated utility, Output is n-length vector
   log(rowSums(exp(V)))
@@ -287,11 +312,13 @@ calculate_park_logsums <- function(distances, sizes, tweets = NULL,
 First, we calculate the distance between the tracts and the parks.
 ```{r distancematrix}
 # calculate centroids of tracts and parks
-tract_centroids <- gCentroid(tracts, byid = TRUE) 
-park_centroids <- gCentroid(parks, byid = TRUE)
+tract_centroids <- tracts %>% st_as_sf() %>% st_centroid() 
+park_centroids <- parks %>% st_centroid() %>% st_transform(st_crs(tract_centroids))
 
 # distances from all tracts to all zones
-distances <- log(gDistance(park_centroids, tract_centroids, byid = TRUE) / 5280)
+distances <- st_distance(park_centroids, tract_centroids, byid = TRUE) %>%
+  units::set_units(miles) %>%
+  units::drop_units()
 ```
 
 
@@ -321,9 +348,9 @@ notweets_logsum <- function(betas, distances, parks, tracts, model) {
 access_sdm_val <- optim(
   fn = notweets_logsum,  
   par = c(-1, 0), # distance, size 
-  lower = c(-100, 0), # size coefficient must be positive 
+  lower = c(-100, -100), # size coefficient must be positive 
   upper = c(0, 100), # distance coefficient must be negative 
-  hessian=TRUE, distances = distances, parks = parks, tracts = tracts, 
+  hessian=TRUE, distances = log(distances[1:10, 1:10]), parks = parks[1:10,], tracts = tracts[1:10, ], 
   model = obese_base_lm, method = "L-BFGS-B", control = list(trace = 6))
 ```
 
