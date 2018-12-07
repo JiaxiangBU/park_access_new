@@ -334,12 +334,11 @@ the logsum construction.
 ```{r notweets_logsum}
 notweets_logsum <- function(betas, distances, parks, tracts, model) {
   
-  estimation_data <- tracts@data %>% 
-    mutate(logsum = calculate_park_logsums(
-      d = distances,  parks$log_size,
-      betas = betas))
-      
-  sdm <- lagsarlm(update(model, . ~ . + logsum), data = estimation_data, 
+  logsum <- calculate_park_logsums(
+    d = distances,  sizes = parks$log_size,
+    betas = betas)
+  
+  sdm <- lagsarlm(update(model, . ~ . + logsum), data = tracts@data, 
                   listw = W, zero.policy = TRUE, type = "mixed")
   return(-as.numeric(logLik(sdm)))
 }
@@ -360,10 +359,10 @@ tweets_logsum <- function(betas, distances, parks, tracts, model) {
   
   estimation_data <- tracts@data %>% 
     mutate(logsum = calculate_park_logsums(
-      distances,  parks$log_size,  parks$log_tweets,
+      d = distances,  sizes = parks$log_size,  tweets = parks$log_tweets,
       betas = betas))
   
-  sdm <- lagsarlm(update(model, . ~ . + logsum), data = estimation_data, 
+  sdm <- lagsarlm(update(model, . ~ . + logsum, data = tracts@data), 
                   listw = W, zero.policy = TRUE, type = "mixed")
   
   return(-as.numeric(logLik(sdm)))
