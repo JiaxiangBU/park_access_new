@@ -273,8 +273,8 @@ and tweets vector, and coefficients.
 
 #' Calculate destination choice logsums from a distance matrix
 #' 
-#' @param distances An $n\times p$ matrix with the distance from all tracts to
-#'   all parks in miles.
+#' @param d An $n\times p$ matrix with the distance from all tracts to
+#'   all parks
 #' @param sizes A p-length vector of park sizes
 #' @param tweets A p-length vector of tweets at parks
 #' @param betas A vector containing the size, distance, and tweet coefficients. 
@@ -284,11 +284,11 @@ and tweets vector, and coefficients.
 #'   accessibility between a tract and all parks.
 #' @details If we have n tracts and p parks, distances needs to be a 
 #' 
-calculate_park_logsums <- function(distances, sizes, tweets = NULL,
+calculate_park_logsums <- function(d, sizes, tweets = NULL,
                                    betas = c(-15,.00001, .001)){
   
   # A is n x p
-  a <- betas[1] * distances
+  a <- betas[1] * d
   
   # B is p x 1
   b <- betas[2] * sizes
@@ -316,7 +316,7 @@ tract_centroids <- tracts %>% st_as_sf() %>% st_centroid()
 park_centroids <- parks %>% st_centroid() %>% st_transform(st_crs(tract_centroids))
 
 # distances from all tracts to all zones
-distances <- st_distance(park_centroids, tract_centroids, byid = TRUE) %>%
+distances <- st_distance(tract_centroids, park_centroids, byid = TRUE) %>%
   units::set_units(miles) %>%
   units::drop_units()
 ```
@@ -336,7 +336,7 @@ notweets_logsum <- function(betas, distances, parks, tracts, model) {
   
   estimation_data <- tracts@data %>% 
     mutate(logsum = calculate_park_logsums(
-      distances,  parks$log_size,
+      d = distances,  parks$log_size,
       betas = betas))
       
   sdm <- lagsarlm(update(model, . ~ . + logsum), data = estimation_data, 
@@ -350,7 +350,7 @@ access_sdm_val <- optim(
   par = c(-1, 0), # distance, size 
   lower = c(-100, -100), # size coefficient must be positive 
   upper = c(0, 100), # distance coefficient must be negative 
-  hessian=TRUE, distances = log(distances[1:10, 1:10]), parks = parks[1:10,], tracts = tracts[1:10, ], 
+  hessian=TRUE, distances = log(distances), parks = parks, tracts = tracts, 
   model = obese_base_lm, method = "L-BFGS-B", control = list(trace = 6))
 ```
 
