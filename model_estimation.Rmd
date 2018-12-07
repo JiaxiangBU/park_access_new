@@ -328,9 +328,6 @@ regression model. This will help us identify the proper coefficients to use for
 the logsum construction.
 
 
-## Model without Tweets
-
-
 ```{r notweets_logsum}
 notweets_logsum <- function(betas, distances, parks, tracts, model) {
   
@@ -338,43 +335,48 @@ notweets_logsum <- function(betas, distances, parks, tracts, model) {
     d = distances,  sizes = parks$log_size,
     betas = betas)
   
-  sdm <- lagsarlm(update(model, . ~ . + logsum), data = tracts@data, 
-                  listw = W, zero.policy = TRUE, type = "mixed")
-  return(-as.numeric(logLik(sdm)))
+  tracts@data$logsum <- logsum
+  
+  sdm <- update(model, . ~ . + logsum)
+
+  return(logLik(sdm))
 }
 
 
 access_sdm_val <- optim(
   fn = notweets_logsum,  
-  par = c(-1, 0), # distance, size 
-  lower = c(-100, -100), # size coefficient must be positive 
+  par = c(-1, 2), # distance, size 
+  lower = c(-100, 0), # size coefficient must be positive 
   upper = c(0, 100), # distance coefficient must be negative 
-  hessian=TRUE, distances = log(distances), parks = parks, tracts = tracts, 
-  model = obese_base_lm, method = "L-BFGS-B", control = list(trace = 6))
+  distances = log(distances), parks = parks, tracts = tracts, 
+  model = obese_base_sdm, 
+  method = "L-BFGS-B", 
+  control = list(fnscale = -1, trace = 6))
 ```
 
 
 ```{r tweets_logsum}
 tweets_logsum <- function(betas, distances, parks, tracts, model) {
   
-  estimation_data <- tracts@data %>% 
-    mutate(logsum = calculate_park_logsums(
-      d = distances,  sizes = parks$log_size,  tweets = parks$log_tweets,
-      betas = betas))
+  logsum <- calculate_park_logsums(
+    d = distances,  sizes = parks$log_size, tweets = parks$log_tweets,
+    betas = betas)
   
-  sdm <- lagsarlm(update(model, . ~ . + logsum, data = tracts@data), 
-                  listw = W, zero.policy = TRUE, type = "mixed")
+  tracts@data$logsum <- logsum
+  sdm <- update(model, . ~ . + logsum)
   
-  return(-as.numeric(logLik(sdm)))
+  return(logLik(sdm))
 }
 
 tweets_sdm_val <- optim(
   fn = notweets_logsum,  
   par = c(-1, 1, 0),
   lower = c(-100, 0, -100), # size coefficient must be positive
-  upper = c(-1e-9, 100, 100), # distance coefficient must be negative
+  upper = c(0, 100, 100), # distance coefficient must be negative
   hessian=TRUE, distances = distances, parks = parks, tracts = tracts, 
-  model = obese_base_lm, method = "L-BFGS-B", control = list(trace = 6))
+  model = obese_base_sdm, 
+  method = "L-BFGS-B", 
+  control = list(fnscale = -1, trace = 6))
 
 ```
 
@@ -384,21 +386,17 @@ tweets_sdm_val <- optim(
 ```{r obesity_access_models}
 tracts@data <- tracts@data %>%
   mutate(
-    access_ls = calculate_park_logsums(distances, parks$log_size, 
-                                       betas = notweets_lm_val$par),
-    tweets_ls = calculate_park_logsums(distances, parks$log_size, parks$log_tweets, 
-                                       betas = tweets_lm_val$par),
+    access_ls = calculate_park_logsums(log(distances), parks$log_size,
+                                       betas = access_sdm_val$par),
+    tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
+                                       betas = tweets_sdm_val$par),
     # demean
     access_ls = access_ls - mean(access_ls),
     tweets_ls = tweets_ls - mean(tweets_ls)
   )
 
-access_sdm <- lagsarlm(update(obese_base_sdm, .~ . + access_ls),   
-                       data = tracts@data,  listw = W, zero.policy = TRUE, 
-                       type = "mixed")
-tweets_sdm <- lagsarlm(update(obese_base_sdm, .~ . + tweets_ls),   
-                       data = tracts@data,  listw = W, zero.policy = TRUE, 
-                       type = "mixed")
+access_sdm <- update(obese_base_sdm, .~ . + access_ls)
+tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
 ```
 
 
@@ -469,16 +467,13 @@ same way for physical activity as for obesity. (maybe?) But that's the assumptio
 we'll make for now.
 
 ```{r physact_estimation}
-pa_base_sdm <- lagsarlm(update(base_formula, PHYSACT ~ .),
-         data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
-pa_access_sdm <- lagsarlm(update(base_formula, PHYSACT ~ . + notweets_ls),  
-          data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
-pa_tweets_sdm <- lagsarlm(update(base_formula, PHYSACT ~ . + tweets_ls),  
-          data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
+pa_base_sdm <- update(obese_base_sdm, log_physact ~ .)
+pa_access_sdm <- update(access_sdm, log_physact ~ .)
+pa_tweets_sdm <- update(tweets_sdm, log_physact ~ .)
 ```
 
 ```{r physact_models}
-physact_models <- list(Base = pa_base_sdm, Access = pa_notweets_sdm, 
+physact_models <- list(Base = pa_base_sdm, Access = pa_access_sdm, 
                        `Access + Tweets` = pa_tweets_sdm)
 screenreg(physact_models, digits = 4)
 ```
@@ -513,8 +508,8 @@ list("Obesity" = obesity_impacts, "Physical activity" = physact_impacts) %>%
 ```{r logsum_scales}
 data_frame(
   Parameter = c("Distance", "Size", "Tweets"),
-  Access = c(notweets_lm_val$par, NA),
-  `Access + Tweets` = tweets_lm_val$par
+  Access = c(access_sdm_val$par, NA),
+  `Access + Tweets` = tweets_sdm_val$par
 )
 
 ```
