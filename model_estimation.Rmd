@@ -348,8 +348,8 @@ access_sdm_val <- optim(
   par = c(-1, 2), # distance, size 
   lower = c(-100, 0), # size coefficient must be positive 
   upper = c(0, 100), # distance coefficient must be negative 
-  distances = log(distances), parks = parks, tracts = tracts, 
-  model = obese_base_sdm, 
+  distances = distances, parks = parks, tracts = tracts, 
+  model = obese_base_lm, 
   method = "L-BFGS-B", 
   control = list(fnscale = -1, trace = 6))
 ```
@@ -359,7 +359,7 @@ access_sdm_val <- optim(
 tweets_logsum <- function(betas, distances, parks, tracts, model) {
   
   logsum <- calculate_park_logsums(
-    d = distances,  sizes = parks$log_size, tweets = parks$log_tweets,
+    d = distances,  sizes = parks$Park_Acres, tweets = parks$TWEET_COUNT,
     betas = betas)
   
   tracts@data$logsum <- logsum
@@ -370,7 +370,7 @@ tweets_logsum <- function(betas, distances, parks, tracts, model) {
 
 tweets_sdm_val <- optim(
   fn = notweets_logsum,  
-  par = c(-1, 1, 0),
+  par = c(access_sdm_val$par, 0),
   lower = c(-100, 0, -100), # size coefficient must be positive
   upper = c(0, 100, 100), # distance coefficient must be negative
   hessian=TRUE, distances = distances, parks = parks, tracts = tracts, 
@@ -387,7 +387,7 @@ tweets_sdm_val <- optim(
 tracts@data <- tracts@data %>%
   mutate(
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = access_sdm_val$par),
+                                       betas = tweets_sdm_val$par),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
                                        betas = tweets_sdm_val$par),
     # demean
