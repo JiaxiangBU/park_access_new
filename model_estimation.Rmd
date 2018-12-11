@@ -345,11 +345,11 @@ notweets_logsum <- function(betas, distances, parks, tracts, model) {
 
 access_sdm_val <- optim(
   fn = notweets_logsum,  
-  par = c(-1, 2), # distance, size 
+  par = c(-10, 0.001), # distance, size 
   lower = c(-100, 0), # size coefficient must be positive 
   upper = c(0, 100), # distance coefficient must be negative 
-  distances = distances, parks = parks, tracts = tracts, 
-  model = obese_base_lm, 
+  distances = log(distances), parks = parks, tracts = tracts, 
+  model = obese_base_sdm, 
   method = "L-BFGS-B", 
   control = list(fnscale = -1, trace = 6))
 ```
@@ -359,7 +359,7 @@ access_sdm_val <- optim(
 tweets_logsum <- function(betas, distances, parks, tracts, model) {
   
   logsum <- calculate_park_logsums(
-    d = distances,  sizes = parks$Park_Acres, tweets = parks$TWEET_COUNT,
+    d = distances,  sizes = parks$log_size, tweets = parks$log_tweets,
     betas = betas)
   
   tracts@data$logsum <- logsum
@@ -373,7 +373,7 @@ tweets_sdm_val <- optim(
   par = c(access_sdm_val$par, 0),
   lower = c(-100, 0, -100), # size coefficient must be positive
   upper = c(0, 100, 100), # distance coefficient must be negative
-  hessian=TRUE, distances = distances, parks = parks, tracts = tracts, 
+  hessian=TRUE, distances = log(distances), parks = parks, tracts = tracts, 
   model = obese_base_sdm, 
   method = "L-BFGS-B", 
   control = list(fnscale = -1, trace = 6))
@@ -383,22 +383,35 @@ tweets_sdm_val <- optim(
 
 
 
-```{r obesity_access_models}
+```{r show_accessibility}
 tracts@data <- tracts@data %>%
   mutate(
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = tweets_sdm_val$par),
+                                       betas = c(-0.8, 0.8)),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = tweets_sdm_val$par),
-    # demean
-    access_ls = access_ls - mean(access_ls),
-    tweets_ls = tweets_ls - mean(tweets_ls)
+                                       betas = c(-0.8, 0.8, 0.2))
   )
 
+tracts_sf <- tracts_sf %>%
+  mutate(
+    access_ls = tracts$access_ls,
+    tweets_ls = tracts$tweets_ls
+  )
+
+pal <- colorQuantile("Spectral", c(tracts_sf$access_ls, tracts_sf$tweets_ls), 5)
+
+leaflet(tracts_sf) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(group = "access", color = ~pal(access_ls)) %>%
+  addPolygons(group = "access + tweets", color = ~pal(tweets_ls)) %>%
+  addLayersControl(baseGroups = c("access", "access + tweets"))
+
+```
+
+```{r obesity_access_models}
 access_sdm <- update(obese_base_sdm, .~ . + access_ls)
 tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
 ```
-
 
 
 
@@ -495,11 +508,11 @@ physact_impacts <- physact_models %>%
 
 # Results
 ```{r impacts_table}
-list("Obesity" = obesity_impacts, "Physical activity" = physact_impacts) %>%
+list("Obesity" = obesity_impacts, "Physical Activity" = physact_impacts) %>%
   bind_rows(.id = "Outcome") %>%
   filter(var %in% c("access_ls", "tweets_ls")) %>%
   dplyr::select(-var, -Base)  %>%
-  gather("Variable", "Impact", -Outcome, -effect) %>%
+  gather("Measure", "Impact", -Outcome, -effect) %>%
   filter(!is.na(Impact))  %>%
   spread(effect, Impact)
 
