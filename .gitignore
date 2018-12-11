@@ -7,3 +7,4 @@ manuscript.log
 manuscript.synctex.gz
 manuscript.tex
 manuscript.bbl
+cache/*
