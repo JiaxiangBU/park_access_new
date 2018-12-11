@@ -41,7 +41,16 @@ income, and educational attainment.
 \maketitle
 <<setup, cache=FALSE, echo=FALSE, message=FALSE>>=
 library(tidyverse)
+library(geojsonio)
+library(rgdal)
+library(rgeos)
+library(maptools)
+library(spdep)
+library(sf)
+library(VGAM)
 knitr::opts_chunk$set(cache=TRUE)
+
+
 @
 
 \section{Introduction}
@@ -365,10 +374,44 @@ and tweets vector, and coefficients.
 
 \section{Methodology}
 
+<<tracts>>=
+tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
+tracts_sf <- st_read("data/nyc_tracts.geojson", quiet = TRUE) %>%
+  st_transform(4326)
+
+
+# identify complete cases
+complete_tracts_index <- tracts_sf %>%
+  st_set_geometry(NULL) %>%
+  tbl_df() %>%
+  complete.cases()
+tracts <- tracts[complete_tracts_index, ]
+@
 
 
 
-\subsection{Spatial weights selection}
+<<parks>>=
+parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
+  mutate(
+    log_size = log(Park_Acres),
+    log_tweets = yeo.johnson(TWEET_COUNT, 0)
+  )
+@
+
+
+
+\subsection{Spatial weight and model selection}
+
+<<weights>>=
+tracts.dnn <- dnearneigh(gCentroid(tracts, byid = TRUE), 0, 1.8 * 5280)
+dists <- nbdists(tracts.dnn, gCentroid(tracts, byid = TRUE))
+dists.inv <- lapply(dists, function(x) 1 / x)
+W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv, zero.policy = TRUE, style = "W")
+trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
+@
+
+
+
 
 
 \section{Results}
