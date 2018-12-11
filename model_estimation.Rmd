@@ -322,65 +322,6 @@ distances <- st_distance(tract_centroids, park_centroids, byid = TRUE) %>%
 ```
 
 
-Now we want to generate an experiment where we supply different $\beta$ values
-to the logsum calculation in order to maximize the log-likelihood function of the
-regression model. This will help us identify the proper coefficients to use for
-the logsum construction.
-
-
-```{r notweets_logsum}
-notweets_logsum <- function(betas, distances, parks, tracts, model) {
-  
-  logsum <- calculate_park_logsums(
-    d = distances,  sizes = parks$log_size,
-    betas = betas)
-  
-  tracts@data$logsum <- logsum
-  
-  sdm <- update(model, . ~ . + logsum)
-
-  return(logLik(sdm))
-}
-
-
-access_sdm_val <- optim(
-  fn = notweets_logsum,  
-  par = c(-10, 0.001), # distance, size 
-  lower = c(-100, 0), # size coefficient must be positive 
-  upper = c(0, 100), # distance coefficient must be negative 
-  distances = log(distances), parks = parks, tracts = tracts, 
-  model = obese_base_sdm, 
-  method = "L-BFGS-B", 
-  control = list(fnscale = -1, trace = 6))
-```
-
-
-```{r tweets_logsum}
-tweets_logsum <- function(betas, distances, parks, tracts, model) {
-  
-  logsum <- calculate_park_logsums(
-    d = distances,  sizes = parks$log_size, tweets = parks$log_tweets,
-    betas = betas)
-  
-  tracts@data$logsum <- logsum
-  sdm <- update(model, . ~ . + logsum)
-  
-  return(logLik(sdm))
-}
-
-tweets_sdm_val <- optim(
-  fn = notweets_logsum,  
-  par = c(access_sdm_val$par, 0),
-  lower = c(-100, 0, -100), # size coefficient must be positive
-  upper = c(0, 100, 100), # distance coefficient must be negative
-  hessian=TRUE, distances = log(distances), parks = parks, tracts = tracts, 
-  model = obese_base_sdm, 
-  method = "L-BFGS-B", 
-  control = list(fnscale = -1, trace = 6))
-
-```
-
-
 
 
 ```{r show_accessibility}
@@ -518,13 +459,5 @@ list("Obesity" = obesity_impacts, "Physical Activity" = physact_impacts) %>%
 
 ```
 
-```{r logsum_scales}
-data_frame(
-  Parameter = c("Distance", "Size", "Tweets"),
-  Access = c(access_sdm_val$par, NA),
-  `Access + Tweets` = tweets_sdm_val$par
-)
-
-```
 
 
