@@ -379,7 +379,7 @@ FUNCTION {format.url}
   url
   duplicate$ empty$
     { pop$ "" }
-    { pop$ "" }
+    { "\urlprefix\url{" swap$ * "}" * }
   if$
 }
 
