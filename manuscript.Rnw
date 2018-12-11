@@ -1,8 +1,7 @@
-\documentclass[Afour,sageh,times]{sagej}
+\documentclass[Crown,sageh,times]{sagej}
 \def\journalname{Submitted to Environment and Planning B: Urban Analytics and City Science}
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 
 %% Front matter =========================
@@ -198,7 +197,7 @@ greenspaces.
 \begin{table*}[ht]
   \caption{Commonly cited benefits of parks and greenspaces}
   \label{tab:parkbenefits}
-\begin{tabular}{lp{14cm}}
+\begin{tabular}{lp{11cm}}
   \hline
 Category & Summary of Benefits\\
 \hline
