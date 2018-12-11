@@ -39,32 +39,33 @@ income, and educational attainment.
 
 
 \maketitle
+<<setup, cache=FALSE, echo=FALSE, message=FALSE>>=
+library(tidyverse)
+knitr::opts_chunk$set(cache=TRUE)
+@
 
 \section{Introduction}
+
 The United States is currently facing an epidemic of obesity and chronic
 diseases, which are non-communicable diseases of long duration and typically
 slow development, including cardiovascular diseases, chronic respiratory
-diseases, diabetes, stroke, joint and bone diseases, and cancer (World Health
-Organization 2014). Recent statistics suggest that approximately 300,000
-premature deaths each year can be attributed to chronic diseases (World Health
-Organization 2014). According to the Trust for Public Land, “On average, an
-obese American racks up nearly $1,500 more per year in health care costs than an
-American of normal weight, for a national total of $147 billion in direct
-medical expenses” (Harnik & Welle 2011). As obesity and chronic disease have
-become rampant, it is no surprise that healthcare costs have risen to nearly
-one-fifth of the United States’ gross domestic product (Harnik & Welle 2011).
-
+diseases, diabetes, stroke, joint and bone diseases, and cancer. The \citet{WHO2014} estimates approximately 300,000
+premature deaths in the United States each year can be attributed to chronic diseases.
+\citet{Finkelstein2009} find an
+obese American spends nearly \$1,500 more per year in health care costs than an
+American of normal weight. As obesity and chronic disease
+have become rampant, it is no surprise that healthcare costs have risen to
+nearly one-fifth of the United States’ gross domestic product \citep{Harnik2011}.
 
 While a moderate amount of regular physical activity has been established as an
 effective strategy for reducing and managing obesity and many of the
-aforementioned chronic diseases (Office of Disease Prevention and Health
-Promotion 2008; Centers for Disease Control and Prevention 2009a; Durstine et
-al. 2013), Wolf notes that “more than 50 percent of U.S. adults do not get
-enough physical activity to provide health benefits; and 24 percent are not
-active at all in their leisure time. Activity decreases with age and sufficient
+aforementioned chronic diseases \citep{Gordon2013}.
+\citeauthor{Wolf2008} notes that “more than 50 percent of U.S. adults do not get
+enough physical activity to provide health benefits; 24 percent are not active
+at all in their leisure time. Activity decreases with age and sufficient
 activity is less common among women than men, and among those with lower incomes
-and less education” (?? 2008). Similarly, the United States Department of Health
-and Human Services notes that less than fifty-percent of Americans meet
+and less education” \cite[22]{Wolf2008}. Similarly, the United States Department of
+Health and Human Services notes that less than fifty-percent of Americans meet
 established recommendations for moderate to vigorous physical activity, or MVPA
 (U.S. DHHS 2010). As the epidemiological transition from infectious to chronic
 diseases is now complete in the developed world, increasing physical activity
@@ -73,20 +74,20 @@ has become a vital public health task in the 21st century.
 Research has shown that the design of the built environment influences a range
 of behaviors, including those related to physical activity. The presence of
 trees and other vegetation in outdoor environments have been shown to be
-positively associated with physical activity (Pretty et al 2005); one finding
+positively associated with physical activity \citep{Pretty2005}; one finding
 suggests that after sidewalks and trails have been constructed, the introduction
 of natural elements positively impacts motivation to engage in physical activity
-(Suminski et al. 2005). Additional evidence indicates that commonly vegetated
+\citep{Suminski2005}. Additional evidence indicates that commonly vegetated
 areas, such as parks and open space, support outdoor physical activity
-(Giles-Corti et al. 2005; Wells et al. 2007). Perhaps most telling is the
-finding that “people in large cities perceive themselves to be generally more
-healthy if a greater percentage of the living environment is greenspace, are
-inclined to be more active, and claim the ability to relax faster” (Wolf 2008).
-Thus, by providing space for active recreation, public parks and greenspaces may
-increase the likelihood of engaging in more physical activity. As such, public
-investment in parks can be thought of as a public health intervention for
-chronic diseases and conditions, as well as general population health.
-
+\cite{Giles-Corti2005, Wells2007}. Perhaps most telling is the
+finding that “people in large cities perceive themselves to be generally
+healthier if a greater percentage of the living environment is greenspace, are
+inclined to be more active, and claim the ability to relax faster”
+\cite[24]{Wolf2008}. Thus, by providing space for active recreation, public
+parks and greenspaces may increase the likelihood of engaging in more physical
+activity. As such, public investment in parks can be thought of as a public
+health intervention for chronic diseases and conditions, as well as general
+population health.
 
 To date, the literature exploring the relationship between parks and health
 outcomes, specifically those related to physical activity and obesity, has
@@ -95,28 +96,279 @@ design of past studies, including the spatial scale of analysis, the population
 of interest, and the measure of proximity and/or accessibility. While studies of
 neighborhood level health impacts do exist, they typically focus on discrete
 populations of interest within individual parks instead of examining the impacts
-of larger park networks. Other studies have used the city and metropolitan
-statistical area as the spatial scale of analysis, which in some cases has
-resulted in the discovery of positive associations between parks and health
-impacts but may conceal more nuanced relationships that exist at smaller spatial
-scales. Evaluating the health impacts of parks and greenspaces using a smaller
+of larger park networks \citep{Bancroft2015, Coutts2008}.
+Other studies have used the city and metropolitan statistical area as the
+spatial scale of analysis, which
+in some cases has resulted in the discovery of positive associations between
+increased park space and positive health impacts but may conceal more nuanced
+relationships that exist at smaller spatial scales \citep{Larson2016}.
+Evaluating the health impacts of parks and greenspaces using a smaller
 unit of analysis is an important research gap to fill, especially considering
 that park use and physical activity within parks varies considerably according
 to residential proximity to parks and park facilities as well as a number of
-sociodemographic factors (Kaczynski et al. 2014). This study attempts to fill
-that gap using New York City as a case study example. Using a new measure of
-park access called ‘Park Choice Accessibility,’ we hypothesize that greater park
-access is associated with an increase in physical activity and a reduction in
-obesity at the census tract level.
+sociodemographic factors \citep{Kaczynski2014}. There are important urban
+design considerations here; is it better to build a single large park with many
+different amenities, or to build a series of smaller parks nearer people’s
+homes. Similarly, do parks placed near low-income households affect the behavior
+of those households? This study attempts to fill that gap using New York City as
+a case study example. Using a new measure of park access called ‘Park Choice
+Accessibility,’ we find
 
 \section{Existing Literature}
+
+\subsection{Urbanization and Public Health Outcomes}
+Across the world, the population of cities is growing at an unprecedented rate.
+With a current estimated global urban population of over 3.5 billion people, the
+United Nations Population Fund estimates that by 2030, 5 billion people will
+inhabit cities worldwide.  By 2050, an additional 3 billion people will live in
+cities – a sixty percent increase over twenty years – with much of this growth
+expected to take place in the developing world (United Nations Population Fund,
+2016). Despite the greater expected concentration of urban growth in other parts
+of the globe, the trend of urbanization is highly visible in the United States
+as well.  According to the U.S. Census Bureau, ''The nation's urban population
+increased by 12.1 percent from 2000 to 2010, outpacing the nation's overall
+growth rate of 9.7 percent for the same period.'' \citet{Nowak2005}
+ estimate that urban land area as a percentage of total land area in the
+U.S. will increase from 3.1\% in 2000 to approximately 8.1\% by the year 2050,
+with urbanized places collectively comprising a land area larger than the state
+of Montana. More than eighty percent of the U.S. population now lives in
+urban areas, compared to sixty-four percent in 1950 (United States Census Bureau
+2007).
+
+The global trend of urbanization has profound implications for population
+health, both positive and negative. Because urbanization corresponds with an
+increase in population density compared to rural and suburban settlement
+patterns, residents of dense urban areas throughout the world have better access
+on average to many health services and health-promoting amenities simply because
+of their closer proximity to such resources \citep{Larson2016}.
+However, despite this benefit of increased density and the ability of cities to
+provide many opportunities for innovation, economic growth and social progress,
+historical and current evidence suggests that rapid urban growth often leads to
+congestion and numerous negative environmental and human health outcomes.
+Interactions between growing urban populations and their environment, marked by
+intensive resource consumption and ecologically harmful patterns of development,
+lead to numerous undesired consequences including pollution and sanitation
+issues as well as racial and socioeconomic disparities \citep{Larson2016}.
+
+Because of the considerable growth of urbanization throughout the world, many
+city planning and public health professionals have begun to pay more attention
+to the role of the built environment in promoting or discouraging health
+behaviors. Until recently, most large-scale health promotion efforts focused on
+individual-level interventions intended to educate people about health
+lifestyles and behaviors, touching on topics including diet and exercise.
+According to \citet{Coutts2008} however, this trend is shifting as professionals
+''have begun adopting an ecological paradigm, accepting that both individual and
+environmental determinants play a role in health behavior. This new, arguably
+revisited, public-health paradigm accounts not only for the compositional (who
+you are) but also for the contextual (where you are) influences on physical
+activity.'' As professionals begin to operate from the assumption that the design
+and configuration of the built environment can facilitate or inhibit physical
+activity, they are increasingly looking to public spaces like parks and
+greenways as key elements of the built environment that can support exercise
+\citet{Coutts2008, Bedimo-Rung2005}.
+
+\subsection{Review of the Health Benefits of Parks}
+A large body of literature exists documenting the many benefits of urban parks
+and greenspaces to human health and wellbeing. Importantly, these benefits stem
+from the provision of ecosystem services, which occur when the natural
+environment supplies something that people demand, improving quality of life and
+well-being \citep{Larson2016}. These services can include the
+provisioning of goods such as fresh water and agricultural products; regulatory
+functions including protection of drinking water quality, heat mitigation, air
+purification, and stormwater management; and cultural functions, such as
+improving aesthetics, providing opportunities for recreation, tourism, and
+physical and mental health, and promoting biodiversity \citep{McDonald2015}.
+According to \citet{Wolch2014}, parks and greenspaces provide ''\ldots a wide
+range of ecosystem services that could help combat many urban ills and improve
+life for city dwellers—especially their health…Ecosystem services provided by
+urban greenspace not only support the ecological integrity of cities, but can
+also protect the public health of urban populations.'' Table
+\ref{tab:parkbenefits} summarizes commonly cited benefits of parks and
+greenspaces.
+
+\begin{table*}[ht]
+  \caption{Commonly cited benefits of parks and greenspaces}
+  \label{tab:parkbenefits}
+\begin{tabular}{lp{14cm}}
+  \hline
+Category & Summary of Benefits\\
+\hline
+Physical Health & Provide clean drinking water \citep{Benedict2006}\\
+ & Foster increased physical activity\\
+ & Promote faster healing in hospitals \citep{Akbari2001}\\
+ & Reduce of heat-related mortality \\
+ & Reduce incidence of cardiovascular-related mortality \\
+ & Improved air quality and related reductions in respiratory-related mortality \citep{Lovasi2008}\\
+ & Reduce incidence of childhood asthma \citep{Wolf2008}\\
+ & Improve birth outcomes\\
+\hline
+Mental Health & Reduce stress and mental fatigue\\
+  & Reduce aggression\\
+  & Enhance emotional and cognitive development\\
+  & Improve behavioral outcomes in youth \\
+\hline
+Social Health & Enhanced community aesthetics\\
+ & Reduce crime\\
+ & Increase social interaction \\
+\hline
+Economic Health & Provide of ecosystem services\\
+ & Increase residential property values and municipal property tax revenues\\
+ & Attract more shoppers and increase economic activity to commercial districts \\
+\hline
+\end{tabular}
+\end{table*}
+
+Given the general benefits of parks and greenspaces in Table \ref{tab:parkbenefits}, several studies
+have attempted to quantify the impacts of these spaces on different facets of
+health and wellbeing at the city level, yielding mixed results. \citet{Larson2016}
+used self-reported scores on the Gallup-Healthways Wellbeing
+Index to evaluate the relationship between different areas of wellbeing,
+including physical health, and park quantity, quality, and accessibility in 44
+U.S. cities. The authors found that “Park quantity (measured as the percentage
+of city area covered by public parks) was among the strongest predictors of
+overall wellbeing, and the strength of this relationship appeared to be driven
+by parks’ contributions to physical and community wellbeing” (Larson, Jennings \&
+Cloutier 2016). While the authors found positive associations between wellbeing
+and park quality and accessibility, these relationships were not statistically
+significant. A study by \citet{West2012} used park data from the
+Trust for Public Land’s 2010 City Park Facts and public health data from the
+Behavioral Risk Factor Surveillance System (BRFSS) to examine relationships
+between the density of parkland, parkland per capita, and levels of physical
+activity and obesity for 67 metropolitan statistical areas in the U.S. The study
+found a significant, positive association between park density and physical
+activity and a significant, negative association between park density and
+obesity. In a study of New York City, \citet{Stark2014} found that the
+“proportion of neighborhoods that was large or small park space and park
+cleanliness were associated with lower BMI among NYC adults after adjusting for
+other neighborhood features such as homicides and walkability, characteristics
+that could influence park usage.”
+
+Interestingly, in a study by \citet{Richardson2012} that examined the
+relationship between urban greenspace and selected mortality rates, the authors
+did not find a statistically significant relationship between the quantity of
+urban greenspace and mortality caused by lung cancer, diabetes, heart disease or
+car accidents, but found that all-cause mortality was significantly higher in
+greener cities. In a meta-analysis of 20 peer reviewed journal articles
+exploring the relationship between parks and objectively measured physical
+activity, \citet{Bancroft2015} found that five studies reported a significant
+positive association between the two, six studies produced mixed results, and
+nine studies found no association at all.
+
+While several of the aforementioned studies yielded results consistent with the
+hypothesis that park access and use confer health benefits stemming from
+increased physical activity and attendant decreases in obesity, all of the
+studies  -- except some that were included in the meta-analysis by
+\citet{Bancroft2015} -– were conducted at the level of the city or metropolitan statistical
+area, potentially concealing variation in health outcomes at more fine-grained
+levels of analysis \citep{Larson2016}.
+
+\subsection{Accessibility to Parks}
+To evaluate the impacts of parks and greenspaces on health outcomes at any
+scale, one of the fundamental tasks involved is the selection of a measure of
+accessibility. In a comprehensive meta-analysis of published studies that
+measure active accessibility (accessibility using non-motorized travel modes
+including walking and cycling), \citet{Vale2016} identified four
+broad categories of studies based on the active accessibility metric employed:
+“distance-based, gravity-based or potential, topological or
+infrastructure-based, and walkability and walk score-type measures.”
+Distance-based measures account only for the Euclidean distance between origins
+and destinations, while infrastructure-based measures explicitly incorporate
+relevant transportation networks like roads and sidewalks to more accurately
+measure travel time and distance. Gravity-based measures incorporate cost
+measures to model accessibility as a function of a destination’s attractiveness
+(i.e., size, commercial activity, etc.) and the cost of traveling to that
+destination from a given origin (i.e., travel time or distance).
+
+Importantly, \citeauthor{Vale2016} acknowledge that there is not yet a
+consensus on the most appropriate accessibility metric to use in a given
+setting, noting that ''ways to measure active accessibility are as varied as the
+number of scholars the measure them.'' However, their meta-analysis
+highlights some of the limitations associated with each of the types of metrics
+described. For example, in describing distance-based accessibility measures, the
+authors note that such measures are ''extremely sensitive to the way in which
+travel impedance (i.e., distance) is measured. Accordingly, four types of
+distance can be identified: Euclidean distance, Manhattan distance, shortest
+network distance, and shortest network time''. The
+appropriateness of one distance-based measure over another can vary
+significantly depending on the topography of the environment and the travel mode
+that is being employed. In describing gravity-based accessibility measures,
+which ''assume that travel is a derived demand and there is a tradeoff between
+the benefit of the opportunity and the cost to reach it from a given origin,''
+the authors note that such measures do not always explicitly account for land
+use characteristics near origins and destinations, which may impact that true
+accessibility of those places.
+
+
+In evaluating methodologies of measuring access to urban services, including
+parks and greenspaces, \citet{Logan2017} note that existing and commonly used
+approaches “often simplify their measure of proximity by using large areal
+units and by imposing arbitrary distance thresholds,” which often results in
+access-poor populations being overlooked. The authors concede that many
+existing approaches have long been necessary because the computational power
+required to use higher-resolution analytical techniques was unavailable.
+However, due to recent advances in computation power and the advent of
+municipal open-data policies, \citeauthor{Logan2017} recommend that future
+analyses of accessibility disaggregate population data to the building or
+parcel level and use network distance instead of Euclidean distance to measure
+proximity.
+
+\section{Choice-based Accessibility}
+
+Consider that an individual is choosing a park for a recreation activity.
+According to basic choice theory \citep{McFadden1974}, the probability of choosing
+park $p$ from the set of all regional parks $J$ is:
+
+$$ P(p | V_p) = \frac{\exp(V_p)}{\sum_{j \in J}\exp(V_j)}$$
+where parks are differentiated from each other by their relative measurable
+utilitie $V$. In principle, $V$ may include any measurable attributes of either
+the choice maker or the park. In this study we use a linear formulation of
+
+$$V_{ij} = size_j\beta_s + distance_{ij}\beta_d$$
+incorporating the size of the park in acres and the distance of the park from
+the census tract $i$ in miles. The coefficients $\beta$ are typically estimated from
+surveys, though in the absence of a survey we apply a maximum likelihood
+technique described below.
+
+A key theoretical understanding of random utility choice models is that the
+consumer surplus of the choice set can be otained as the log-sum of the
+denominator of the choice probability equation. In plainer terms, the *total value*
+of an individual's park accessibility is defined to be:
+
+$$CS_i = \ln\left({\sum_{j \in J}\exp(V_{ij})}\right)$$
+
+There are several advantages to a log-sum defined metric relative to
+buffer-based accessibility metrics more commonly found in the literature. First,
+all individuals are defined as having some access to all parks, rather than an
+arbitrary limit of 1/2 mile or so. This allows for the fact that some people are
+more or less sensitive to distances, and that distance is a continuous, and not
+a binary, phenomenon. Second, the random utility formulation allows the
+researcher to include any attribute of the park; in this case, we consider the
+size of the park as an element of accessibility. This suggests that not all
+parks are equal, and that a large park such as New York City's Central Park may
+provide health and activity benefits over a much larger area than a smaller
+community square.
+
+
+In the absence of a park choice survey, we estimated likely values of the $\beta$
+coefficients by iteratively searching for the values which produced the highest
+model likelihood in *which model did we use to estimate likelihood?*. The search
+was constrained by two assertions. First, we required that the coefficient on
+size be positive and that on distance negative; all else equal, people will
+prefer to use larger parks that are nearer to their residence. Second, we visually
+inspected the resulting accessibility scores to ensure that the scores produced a
+reasonably varied pattern of access throughout the metropolitan region.
+
+$$ A_i = log\sum_{j \in J}\exp(distance_{ij} \beta_d + size_j \beta_j + tweets_j \beta_t)$$
+We wrote a function to calculate this value for an arbitrary distance matrix, size
+and tweets vector, and coefficients.
 
 
 \section{Methodology}
 
 
-\subsection{Spatial weights selection}
 
+
+\subsection{Spatial weights selection}
 
 
 \section{Results}
@@ -130,5 +382,6 @@ This project was funded in part via \ldots.
 \end{funding}
 
 \bibliographystyle{SageH}
+\bibliography{citations}
 
 \end{document}
