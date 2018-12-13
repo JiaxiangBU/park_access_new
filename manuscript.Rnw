@@ -59,7 +59,7 @@ library(qwraps2)
 library(knitr)
 library(kableExtra)
 opts_chunk$set(cache=TRUE)
-
+library(leaflet)
 
 @
 
@@ -367,23 +367,20 @@ parks are equal, and that a large park such as New York City's Central Park may
 provide health and activity benefits over a much larger area than a smaller
 community square.
 
-Note that this formulation is an extension of the gravity-based accessibility 
-statistics, in the same way that the gravity model is a specific case of 
-a destination-choice model \citep{Daly1982}. The extension 
+Note that this formulation is an extension of the gravity-based accessibility
+statistics, in the same way that the gravity model is a specific case of
+a destination-choice model \citep{Daly1982}. The extension
 
 
-\section{Methodology}
+\section{Empirical Application}
 
+\subsection{Data}
 
 <<tracts>>=
 tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
-tracts_sf <- st_read("data/nyc_tracts.geojson", quiet = TRUE) %>%
-  st_transform(4326)
-
 
 # identify complete cases
-complete_tracts_index <- tracts_sf %>%
-  st_set_geometry(NULL) %>%
+complete_tracts_index <- tracts@data %>%
   tbl_df() %>%
   complete.cases()
 tracts <- tracts[complete_tracts_index, ]
@@ -391,6 +388,7 @@ tracts <- tracts[complete_tracts_index, ]
 
 tracts@data <-  tbl_df(tracts@data) %>%
   dplyr::transmute(
+    geoid = GEOID,
     county_fips = substr(GEOID, 3, 5),
     borough = case_when(
       county_fips == "081" ~ "Queens",
@@ -405,27 +403,28 @@ tracts@data <-  tbl_df(tracts@data) %>%
     log_obesity = log(OBESITY),
     log_physact = log(100 - Phys_Act),
     density = Pop_Density,
-    fulltime = FulltimeWork, college = CollegeDeg, 
+    fulltime = FulltimeWork, college = CollegeDeg,
     single = Single_Percent,
     black = PctBlack, asian = PctAsian, hispanic = PctHispanic,
     other = PctNative + PctPacific,
-    Pct0to17, Pct18to29, Pct65plus, 
-    Income1, Income2, Income3, Income4, Income5, Income6, 
+    Pct0to17, Pct18to29, Pct65plus,
+    Income1, Income2, Income3, Income4, Income5, Income6,
     Income7, Income8, Income9, Income10
-  )  
-
-tracts_sf <- st_as_sf(tracts)
+  ) 
 @
 
+This study used data available to the public from a variety of agencies and
+data providers.
 We obtained data on aggregate health outcomes from the Centers for Disease
-Control and Prevention (CDC) for census tracts in the New York City area. After
-removing tracts with missing population information, we have Sexpr{nrow(tracts)}
-complete cases.
+Control and Prevention (CDC) for census tracts in five boroughs of New York City.
+After removing tracts with missing population information, we have
+Sexpr{nrow(tracts)} complete cases. Table \ref{tab:tractsdata} presents key
+descriptive statistics for these data.
 
 
 \begin{table*}
   \caption{Summary Statistics of Tract Data}
-  \label{tab:parkbenefits}
+  \label{tab:tractsdata}
 <<data_summary, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
 our_summary <- list(
   "obesity"     = tab_summary(tracts$obesity),
@@ -447,8 +446,10 @@ summary_table(tracts@data, our_summary) %>%
 
 <<parks>>=
 parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
-  mutate(
+  transmute(
+    size = Park_Acres,
     log_size = log(Park_Acres),
+    tweets = TWEET_COUNT, 
     log_tweets = yeo.johnson(TWEET_COUNT, 0)
   )
 @
@@ -458,59 +459,28 @@ We also collected data on park geometry.
 
 
 
-In the absence of a park choice survey, we estimated likely values of the $\beta$
-coefficients by iteratively searching for the values which produced the highest
-model likelihood in *which model did we use to estimate likelihood?*. The search
-was constrained by two assertions. First, we required that the coefficient on
-size be positive and that on distance negative; all else equal, people will
-prefer to use larger parks that are nearer to their residence. Second, we visually
-inspected the resulting accessibility scores to ensure that the scores produced a
-reasonably varied pattern of access throughout the metropolitan region.
 
-<<f_logsums>>=
-#' Calculate destination choice logsums from a distance matrix
-#' 
-#' @param d An $n\times p$ matrix with the distance from all tracts to
-#'   all parks
-#' @param sizes A p-length vector of park sizes
-#' @param tweets A p-length vector of tweets at parks
-#' @param betas A vector containing the size, distance, and tweet coefficients. 
-#'   If we submit two variables the tweets are ignored.
-#'   
-#' @return An n-length vector containing the weighted log-sum based
-#'   accessibility between a tract and all parks.
-#' @details If we have n tracts and p parks, distances needs to be a 
-#' 
-calculate_park_logsums <- function(d, sizes, tweets = NULL,
-                                   betas = c(-15,.00001, .001)){
-  
-  # A is n x p
-  a <- betas[1] * d
-  
-  # B is p x 1
-  b <- betas[2] * sizes
-  
-  if(!is.null(tweets)) 
-    b <- b + betas[3] * tweets
-  
-  # calculate observed utility by adding the weighted park-level attributes 
-  # to the columns of the matrix
-  # V is n x p, with b added by-column to each element in a
-  V <- sweep(a, 2, b, `+`)
-  
-  # log-sum of exponentiated utility, Output is n-length vector
-  log(rowSums(exp(V)))
-  
-}
+\subsection{Model}
+
+We predict the obesity rate in a census tract as a function of the tract's
+sociodemographic characteristics and choice-based accessibility to parks with a
+semi-log specification:
+\begin{equation}\label{eq:themodel}
+\log(\mathit{Obesity})_i = f(\vect{X}_i, A_i, g(W, \mathit(Obesity), \vect{X}))
+\end{equation}
+<<base_formula>>=
+base_formula <- formula( 
+  ~ log(density) + 
+    fulltime + college + single + 
+    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
+    black + asian + hispanic + other)
 @
-
-
-
-\subsection{Spatial dependence and correlation}
-
+where $\vect{T}_i$ is a vector of tract-level attributes, $A_i$ is a choice-based
+accessibility measure for the tract, and $g(W, \mathit(Obesity), \vect{T})$
+represents the impact of spatial neighborhood effects on the outcome.
 Using tracts as the unit of observation in the model allows us to consider the
 availability of parks at a metropolitan level, but it also introduces the problem
-spatial correlation of unobserved errors and spatial dependence in the data
+of spatial correlation of unobserved errors and spatial dependence in the data
 generating process \citep{Cliff1970, Anselin1980}. Spatial correlation occurs
 when spatially-distributed unobservable or missing variables (school quality,
 neighborhood prestige, etc.) influence the modeled outcomes. Spatial dependence
@@ -549,9 +519,10 @@ W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv,
 trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
 @
 
-It may in some cases be more efficient to estimate a restricted spatial autoregressive
-model, that controls for only correlation or only dependence. \citet{tra_autoregression_paper}
-illustrate a decision algorithm --- proposed by \citet{Florax2003} --- which uses
+It may  be more efficient to estimate a restricted spatial autoregressive
+model -- that controls for only correlation or only dependence -- and therefore
+save degrees of freedom in the estimation.  \citet{tra_autoregression_paper}
+illustrate a decision algorithm originally proposed by \citet{Florax2003} which uses
 a likelihood ratio test of the SDM against a restricted spatial error model (SEM):
 if the likelihood ratio test rejects that the models are equivalent, then the SDM
 should be used.
@@ -566,8 +537,147 @@ attributes can attained via Monte Carlo simulation. In this study we use the
 \texttt{spdep} package for R \citep{Bivand2013} for model estimation and impact
 simulation.
 
+\subsection{Accessibility}
+
+Extant destination choice models used in practice typically use travel time in
+minutes as a travel impedance term, and employment by sector as a size term or
+attraction component. Typically such models handle recreational trips together with
+other non-work and non-school trips, and we therefore can find no previously
+estimated coefficients using size terms relevant to park acreage or amenities.
+Given this gap in the literature, we instead assert values for $\beta$ to generate
+the choice-based accessibility statistic used in this study.
+
+<<f_logsums>>=
+#' Calculate destination choice logsums from a distance matrix
+#'
+#' @param d An $n\times p$ matrix with the distance from all tracts to
+#'   all parks
+#' @param sizes A p-length vector of park sizes
+#' @param tweets A p-length vector of tweets at parks
+#' @param betas A vector containing the size, distance, and tweet coefficients.
+#'   If we submit two variables the tweets are ignored.
+#'
+#' @return An n-length vector containing the weighted log-sum based
+#'   accessibility between a tract and all parks.
+#' @details If we have n tracts and p parks, distances needs to be a
+#'
+calculate_park_logsums <- function(d, sizes, tweets = NULL,
+                                   betas = c(-0.4,0.2,0.001)){
+
+  # A is n x p
+  a <- betas[1] * d
+
+  # B is p x 1
+  b <- betas[2] * sizes
+
+  if(!is.null(tweets))
+    b <- b + betas[3] * tweets
+
+  # calculate observed utility by adding the weighted park-level attributes
+  # to the columns of the matrix
+  # V is n x p, with b added by-column to each element in a
+  V <- sweep(a, 2, b, `+`)
+
+  # log-sum of exponentiated utility, Output is n-length vector
+  log(rowSums(exp(V)))
+
+}
+@
+
+We initially estimated potential values of the $\beta$ coefficients by
+applying a limited-memory, box-constrained optimization algorithm maximizing the
+SDM model log-likehood. The constraint required that the coefficient on
+size be positive and that on distance negative; all else equal, we assert people
+will prefer to use larger parks and parks that are nearer to their residence. This
+resulted in $\beta_d = -0.42$  and $\beta_s = 0.000$. Given our expectation that
+park size is a valuable attribute, we subsequently adjusted this value to
+
+<<distances, warning=FALSE>>=
+# calculate centroids of tracts and parks
+pop_weighted_centroids <- read_csv("data/CenPop2010_Mean_TR36.csv") %>%
+  mutate(geoid = str_c(STATEFP, COUNTYFP, TRACTCE))
+pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "geoid") %>%
+  dplyr::select(geoid, LONGITUDE, LATITUDE) %>%
+  st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
+  st_transform(2263) 
+parks <- parks %>% st_transform(st_crs(pop_weighted_centroids))
+
+# distances from all tracts to all zones
+distances <- st_distance(pop_weighted_centroids, parks, byid = TRUE) %>%
+  units::set_units(miles) %>%
+  units::drop_units()
+
+# assert that a tract must be at least 1/10 mile from a park
+distances <- pmax(distances, 0.1)
+@
+
+<<logsum_betas>>=
+tracts@data <- tracts@data %>%
+  mutate(
+    access_ls = calculate_park_logsums(log(distances), parks$log_size,
+                                       betas = c(-0.42, 1.0)),
+    tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
+                                       betas = c(-0.42, 1.0)),
+    distance_ls = (distance_ls - mean(distance_ls) )/ sd(distance_ls),
+    access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
+    tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
+  )
+
+tracts_sf <- tracts %>% st_as_sf() %>% st_transform(4326)
+@
+
+<<leaflet, eval=FALSE>>=
+# this interactive map is much easier to create and explore
+pal <- colorQuantile("Spectral", tracts_sf$access_ls, n = 5)
+leaflet(tracts_sf) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(group = "access", color = ~ pal(access_ls), label = ~as.character(round(access_ls,2))) 
+@
+
+
+\begin{figure*}
+
+<<map>>=
+map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner"),
+             extent = "device")
+map +
+  geom_sf(data = tracts_sf, inherit.aes=FALSE, 
+          aes(fill = cut(access_ls, quantile(access_ls))), alpha = 0.8) +
+  scale_fill_brewer("Relative Park Logsum", palette = "GnBu")
+@
+  \caption{Relative surplus-based accessibility in New York City}
+  \label{fig:map}
+\end{figure*}
 
 \section{Results}
+
+We estimate 
+
+```{r spatial selection}
+obese_base_lm <- lm(update(base_formula, log_obesity ~ .), data = tracts@data)
+obese_base_sar <- lagsarlm(update(base_formula, log_obesity ~ .), 
+                           data = tracts@data, listw = W, zero.policy = TRUE)
+obese_base_sem <- errorsarlm(update(base_formula, log_obesity ~ .), 
+                             data = tracts@data, listw = W, zero.policy = TRUE)
+obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ .), 
+                           data = tracts@data, listw = W, zero.policy = TRUE, 
+                           type = "mixed")
+```
+
+
+A likelihood ratio test reveals that the SEM is not preferred, so we use the SDM
+only going forward.
+
+```{r lrtest}
+lmtest::lrtest(obese_base_sem, obese_base_sdm)
+```
+
+
+```{r obesity_access_models}
+access_sdm <- update(obese_base_sdm, .~ . + access_ls)
+tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
+```
+
 
 
 
