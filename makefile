@@ -23,16 +23,16 @@ MASTER = manuscript.pdf
 
 BIBDATA = ./doc/bibliography.bib
 
-all: $(MASTER) 
+all: $(MASTER)
 	@ make clean
 
-manuscript.rnw: 
+manuscript.rnw:
 	@ echo + Creating dataset from $< ...
 	@ R64 CMD BATCH '$<'
 
 manuscript.tex: manuscript.rnw
-	@echo + Sweaving $@ from $< ... 
-	Rscript -e "knitr::knit('$<')" 	
+	@echo + Sweaving $@ from $< ...
+	Rscript -e "knitr::knit('$<')"
 
 $(MASTER): manuscript.tex
 	@ echo + Writing $@ from $< ...
@@ -40,14 +40,14 @@ $(MASTER): manuscript.tex
 
 clean:
 	@ echo + Cleaning ...
-	@ rm -f *.aux *.lof *.log *.lot *.toc Rplots.pdf 
-	@ rm -f *.bbl *.blg *.dvi 
+	@ rm -f *.aux *.lof *.log *.lot *.toc Rplots.pdf
+	@ rm -f *.bbl *.blg *.dvi
 	@ rm -f *.spl *.ttt *.fff
 
 realclean: clean
 	@echo + Really cleaning ...
 	rm -f $(MASTER)
-	rm -f $(patsubst %.rnw,%.tex,$(RNWFILES)) 
+	rm -f $(patsubst %.pdf,%.tex,$(MASTER)) 
 
 docx: manuscript.tex
 	@ echo + Creating MS Word .docx from .tex
@@ -57,10 +57,10 @@ docx: manuscript.tex
 
 Stangle:$(RNWFILES)
 	R64 CMD STANGLE '$<'
-	open *.R -a R64 
+	open *.R -a R64
 
 export:
-	@ cp $(MASTER) ~/Dropbox/ 
+	@ cp $(MASTER) ~/Dropbox/
 
 menu:
 	@ echo + ==============================
@@ -69,7 +69,7 @@ menu:
 	@ echo + clean: ...... delete aux files
 	@ echo + realclean: . delete all output
 	@ echo + Stangle: extract R code into R
-	@ echo + 
+	@ echo +
 	@ echo + Georgia Tech---------
 	@ echo + --------Civil Engineering
 	@ echo + ==============================

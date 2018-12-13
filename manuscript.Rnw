@@ -209,9 +209,9 @@ greenspaces.
   \caption{Commonly cited benefits of parks and greenspaces}
   \label{tab:parkbenefits}
 \begin{tabular}{lp{11cm}}
-  \hline
+\toprule
 Category & Summary of Benefits\\
-\hline
+\midrule
 Physical Health & Provide clean drinking water \citep{Benedict2006}\\
  & Foster increased physical activity\\
  & Promote faster healing in hospitals \citep{Akbari2001}\\
@@ -220,20 +220,20 @@ Physical Health & Provide clean drinking water \citep{Benedict2006}\\
  & Improved air quality and related reductions in respiratory-related mortality \citep{Lovasi2008}\\
  & Reduce incidence of childhood asthma \citep{Wolf2008}\\
  & Improve birth outcomes\\
-\hline
+\midrule
 Mental Health & Reduce stress and mental fatigue\\
   & Reduce aggression\\
   & Enhance emotional and cognitive development\\
   & Improve behavioral outcomes in youth \\
-\hline
+\midrule
 Social Health & Enhanced community aesthetics\\
  & Reduce crime\\
  & Increase social interaction \\
-\hline
+\midrule
 Economic Health & Provide of ecosystem services\\
  & Increase residential property values and municipal property tax revenues\\
  & Attract more shoppers and increase economic activity to commercial districts \\
-\hline
+\bottomrule
 \end{tabular}
 \end{table*}
 
@@ -511,7 +511,16 @@ W_{ij} = \begin{cases}
 \end{equation}
 
 <<weights>>=
-tracts.dnn <- dnearneigh(gCentroid(tracts, byid = TRUE), 0, 1.8 * 5280)
+pop_weighted_centroids <- read_csv("data/CenPop2010_Mean_TR36.csv") %>%
+  mutate(geoid = str_c(STATEFP, COUNTYFP, TRACTCE))
+pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "geoid") %>%
+  dplyr::select(geoid, LONGITUDE, LATITUDE) %>%
+  st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
+  st_transform(2263)
+
+
+tracts.dnn <- dnearneigh(gCentroid(as(pop_weighted_centroids, "Spatial"), byid = TRUE), 
+                         0, 1.8 * 5280)
 dists <- nbdists(tracts.dnn, gCentroid(tracts, byid = TRUE))
 dists.inv <- lapply(dists, function(x) 1 / x)
 W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv,
@@ -594,12 +603,7 @@ park size is a valuable attribute, we subsequently adjusted this value to
 
 <<distances, warning=FALSE>>=
 # calculate centroids of tracts and parks
-pop_weighted_centroids <- read_csv("data/CenPop2010_Mean_TR36.csv") %>%
-  mutate(geoid = str_c(STATEFP, COUNTYFP, TRACTCE))
-pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "geoid") %>%
-  dplyr::select(geoid, LONGITUDE, LATITUDE) %>%
-  st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
-  st_transform(2263) 
+ 
 parks <- parks %>% st_transform(st_crs(pop_weighted_centroids))
 
 # distances from all tracts to all zones
@@ -617,8 +621,7 @@ tracts@data <- tracts@data %>%
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
                                        betas = c(-0.42, 1.0)),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = c(-0.42, 1.0)),
-    distance_ls = (distance_ls - mean(distance_ls) )/ sd(distance_ls),
+                                       betas = c(-0.42, 1.0, 0.1)),
     access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
     tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
   )
@@ -631,13 +634,18 @@ tracts_sf <- tracts %>% st_as_sf() %>% st_transform(4326)
 pal <- colorQuantile("Spectral", tracts_sf$access_ls, n = 5)
 leaflet(tracts_sf) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  addPolygons(group = "access", color = ~ pal(access_ls), label = ~as.character(round(access_ls,2))) 
+  addPolygons(group = "access", color = ~ pal(access_ls), 
+              label = ~as.character(round(access_ls,2))) %>% 
+  addPolygons(group = "tweets", color = ~ pal(tweets_ls), 
+              label = ~as.character(round(tweets_ls,2))) %>%
+  addLayersControl(baseGroups = c("access", "tweets"))
 @
 
 
 \begin{figure*}
 
-<<map>>=
+<<map, echo=FALSE, message=FALSE, warning=FALSE>>=
+library(ggmap)
 map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner"),
              extent = "device")
 map +
@@ -653,30 +661,38 @@ map +
 
 We estimate 
 
-```{r spatial selection}
-obese_base_lm <- lm(update(base_formula, log_obesity ~ .), data = tracts@data)
-obese_base_sar <- lagsarlm(update(base_formula, log_obesity ~ .), 
-                           data = tracts@data, listw = W, zero.policy = TRUE)
+<<spatial selection>>=
 obese_base_sem <- errorsarlm(update(base_formula, log_obesity ~ .), 
                              data = tracts@data, listw = W, zero.policy = TRUE)
 obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ .), 
                            data = tracts@data, listw = W, zero.policy = TRUE, 
                            type = "mixed")
-```
+test_sdmsem <- lmtest::lrtest(obese_base_sem, obese_base_sdm)
+@
+
 
 
 A likelihood ratio test reveals that the SEM is not preferred, so we use the SDM
 only going forward.
 
-```{r lrtest}
-lmtest::lrtest(obese_base_sem, obese_base_sdm)
-```
-
-
-```{r obesity_access_models}
+<<access_sdm>>=
+# estimate models
 access_sdm <- update(obese_base_sdm, .~ . + access_ls)
 tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
-```
+@
+
+
+\begin{table*}
+  \caption{Estimated Coefficients on Obesity}
+  \label{fig:obeseity_models}
+<<modelchart, results="asis">>=
+library(texreg)
+obesity_models <- list(Base = obese_base_sdm, `Access` = access_sdm, 
+                       `Access + Tweets` = tweets_sdm)
+texreg(obesity_models, digits = 4, table = FALSE, single.row = TRUE, 
+       booktabs = TRUE, use.packages = FALSE)
+@
+\end{table*}
 
 
 
