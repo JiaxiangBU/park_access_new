@@ -58,7 +58,7 @@ library(VGAM)
 library(qwraps2)
 library(knitr)
 library(kableExtra)
-opts_chunk$set(cache=TRUE)
+opts_chunk$set(cache=TRUE, message = FALSE, echo = FALSE)
 library(leaflet)
 
 @
@@ -331,45 +331,55 @@ analyses of accessibility disaggregate population data to the building or
 parcel level and use network distance instead of Euclidean distance to measure
 proximity.
 
-\section{Choice-based Accessibility}
+\subsection{Choice-based Accessibility}
 
 Consider that an individual is choosing a park for a recreation activity.
-According to basic choice theory \citep{McFadden1974}, the probability of choosing
-park $p$ from the set of all regional parks $J$ is:
-
-$$ P(p | V_p) = \frac{\exp(V_p)}{\sum_{j \in J}\exp(V_j)}$$
+If we apply random utility choice theory, specifically the multinomial
+logit model \citep{McFadden1974}, the expected probability of individual 
+$i$ choosing park $j$ from the set of all regional parks $P$ is
+\begin{equation}\label{eq:mnl}
+P(j | V_{ij}) = \frac{\exp(V_{ij})}{\sum_{p \in P}\exp(V_{ip})}
+\end{equation}
 where parks are differentiated from each other by their relative measurable
-utilities $V$. In principle, $V$ may include any measurable attributes of either
+utilities $V_{ij}$. In principle, $V$ may include any measurable attributes of either
 the choice maker or the park. In this study we use a linear formulation of
-
-$$V_{ij} = size_j\beta_s + distance_{ij}\beta_d$$
+\begin{equation}\label{eq:v_sd}
+V_{ij} = size_j\beta_s + distance_{ij}\beta_d
+\end{equation}
 incorporating the size of the park in acres and the distance of the park from
-the census tract $i$ in miles. The coefficients $\beta$ are typically estimated from
-surveys, though in the absence of a survey we apply a maximum likelihood
-technique described below.
+the census tract $i$ in miles. The coefficients $\vec{\beta}$ can be 
+estimated from household surveys, though in the absence of a survey we 
+may assert reasonable values.
 
 A key theoretical understanding of random utility choice models is that the
-consumer surplus of the choice set can be otained as the log-sum of the
-denominator of the choice probability equation. In plainer terms, the *total value*
-of an individual's park accessibility is defined to be:
-
-$$CS_i = \ln\left({\sum_{j \in J}\exp(V_{ij})}\right)$$
-
+consumer surplus, or the total value of all alternatives of the choice set, can 
+be obtained as the log-sum of the denominator of the choice probability equation:
+\begin{equation}\label{eq:cs}
+CS_i = \ln\left({\sum_{p \in J}\exp(V_{ip})}\right)
+\end{equation}
 There are several advantages to a log-sum defined metric relative to
 buffer-based accessibility metrics more commonly found in the literature. First,
 all individuals are defined as having some access to all parks, rather than an
-arbitrary limit of 1/2 mile or so. This allows for the fact that some people are
-more or less sensitive to distances, and that distance is a continuous, and not
-a binary, phenomenon. Second, the random utility formulation allows the
-researcher to include any attribute of the park; in this case, we consider the
+arbitrary cutoff asserted by the researcher. This allows for the fact that some 
+people are more or less sensitive to distances, and that distance is a 
+continuous, and not a binary, phenomenon. Second, the random utility 
+formulation allows the researcher to include any attribute of the park; 
+in this case, we consider the
 size of the park as an element of accessibility. This suggests that not all
-parks are equal, and that a large park such as New York City's Central Park may
+parks are equal, and that a large park such as Central Park on Manhattan may
 provide health and activity benefits over a much larger area than a smaller
 community square.
 
 Note that this formulation is an extension of the gravity-based accessibility
 statistics, in the same way that the gravity model is a specific case of
-a destination-choice model \citep{Daly1982}. The extension
+a destination-choice model \citep{Daly1982}. The extension allows us to consider
+more attributes of the park or the indivdual beyond size and impedance. For example,
+we can aggregate the number of tweets emanating from a park as a measure of the
+park's attractiveness beyond its size, and the utility for the choice maker from 
+Equation \ref{eq:v_sd} then becomes
+\begin{equation}\label{eq:v_sdt}
+V_{ij} = size_j\beta_s + distance_{ij}\beta_d + tweets_j\beta_t
+\end{equation}
 
 
 \section{Empirical Application}
@@ -466,7 +476,7 @@ We predict the obesity rate in a census tract as a function of the tract's
 sociodemographic characteristics and choice-based accessibility to parks with a
 semi-log specification:
 \begin{equation}\label{eq:themodel}
-\log(\mathit{Obesity})_i = f(\vect{X}_i, A_i, g(W, \mathit(Obesity), \vect{X}))
+\log(\mathit{Obesity})_i = f(\vect{x}_i, CS_i, g(W, \mathit{Obesity}, \vect{X}))
 \end{equation}
 <<base_formula>>=
 base_formula <- formula( 
@@ -475,8 +485,9 @@ base_formula <- formula(
     Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
     black + asian + hispanic + other)
 @
-where $\vect{T}_i$ is a vector of tract-level attributes, $A_i$ is a choice-based
-accessibility measure for the tract, and $g(W, \mathit(Obesity), \vect{T})$
+where $\vect{x}_i$ is a vector of tract-level attributes, $CS_i$ is a choice-based
+accessibility measure for the tract computed from Equations \ref{eq:v_sd} or 
+\ref{eq:v_sdt}, and $g(W, \mathit{Obesity}, T)$
 represents the impact of spatial neighborhood effects on the outcome.
 Using tracts as the unit of observation in the model allows us to consider the
 availability of parks at a metropolitan level, but it also introduces the problem
@@ -659,8 +670,6 @@ map +
 
 \section{Results}
 
-We estimate 
-
 <<spatial selection>>=
 obese_base_sem <- errorsarlm(update(base_formula, log_obesity ~ .), 
                              data = tracts@data, listw = W, zero.policy = TRUE)
@@ -670,9 +679,7 @@ obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ .),
 test_sdmsem <- lmtest::lrtest(obese_base_sem, obese_base_sdm)
 @
 
-
-
-A likelihood ratio test reveals that the SEM is not preferred, so we use the SDM
+We estimated the A likelihood ratio test rejects that the SEM is equivalent, so we use the SDM
 only going forward.
 
 <<access_sdm>>=
