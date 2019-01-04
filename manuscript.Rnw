@@ -58,6 +58,7 @@ library(VGAM)
 library(qwraps2)
 library(knitr)
 library(kableExtra)
+library(texreg)
 opts_chunk$set(cache=TRUE, message = FALSE, echo = FALSE)
 library(leaflet)
 
@@ -336,22 +337,22 @@ proximity.
 Consider that an individual is choosing a park for a recreation activity.
 If we apply random utility choice theory, specifically the multinomial
 logit model \citep{McFadden1974}, the expected probability of individual 
-$i$ choosing park $j$ from the set of all regional parks $P$ is
+$i$ choosing park $j$ from the set of all regional parks $J$ is
 \begin{equation}\label{eq:mnl}
-P(j | V_{ij}) = \frac{\exp(V_{ij})}{\sum_{p \in P}\exp(V_{ip})}
+P(j | V_{ij}) = \frac{\exp(V_{ij})}{\sum_{p \in J}\exp(V_{ip})}
 \end{equation}
 where parks are differentiated from each other by their relative measurable
 utilities $V_{ij}$. In principle, $V$ may include any measurable attributes of either
 the choice maker or the park. In this study we use a linear formulation of
 \begin{equation}\label{eq:v_sd}
-V_{ij} = size_j\beta_s + distance_{ij}\beta_d
+V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d
 \end{equation}
 incorporating the size of the park in acres and the distance of the park from
-the census tract $i$ in miles. The coefficients $\vec{\beta}$ can be 
+the census tract $i$ in miles. The coefficients $\vect{\lambda}$ can be 
 estimated from household surveys, though in the absence of a survey we 
 may assert reasonable values.
 
-A key theoretical understanding of random utility choice models is that the
+A key theoretical outcome of random utility choice models is that the
 consumer surplus, or the total value of all alternatives of the choice set, can 
 be obtained as the log-sum of the denominator of the choice probability equation:
 \begin{equation}\label{eq:cs}
@@ -378,11 +379,11 @@ we can aggregate the number of tweets emanating from a park as a measure of the
 park's attractiveness beyond its size, and the utility for the choice maker from 
 Equation \ref{eq:v_sd} then becomes
 \begin{equation}\label{eq:v_sdt}
-V_{ij} = size_j\beta_s + distance_{ij}\beta_d + tweets_j\beta_t
+V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d + tweets_j\lambda_t
 \end{equation}
 
 
-\section{Empirical Application}
+\section{Empirical Methodology}
 
 \subsection{Data}
 
@@ -461,22 +462,36 @@ parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
     log_size = log(Park_Acres),
     tweets = TWEET_COUNT, 
     log_tweets = yeo.johnson(TWEET_COUNT, 0)
-  )
+  ) %>% 
+  filter(size > 0.5)
 @
 
-We also collected data on park geometry.
+We also collected data on park geometry, limited to parks larger than 0.5 acres.
+
+\begin{table*}
+  \caption{Summary Statistics of Parks Data}
+  \label{tab:parksdata}
+<<parks_summary, results="asis", message=FALSE, warning=FALSE, eval = FALSE>>=
+park_summary <- list(
+  "size"     = tab_summary(parks$size),
+  "tweets"   = tab_summary(parks$tweets)
+)
+
+summary_table(as_data_frame(parks), park_summary) %>%
+  kable("latex", booktabs = T, escape = FALSE, col.names = c("")) %>%
+  group_rows("Size: size of park in acres", 1, 4) %>%
+  group_rows("Tweets: number of tweets emanating from park", 5, 8)
+@
+\end{table*}
 
 
+\subsection{Model}\label{subsec:model}
 
-
-
-\subsection{Model}
-
-We predict the obesity rate in a census tract as a function of the tract's
-sociodemographic characteristics and choice-based accessibility to parks with a
-semi-log specification:
+We predict the rate of physical activity ($y$) in a census tract as a 
+function of the tract's sociodemographic characteristics and choice-based 
+accessibility to parks with a semi-log specification:
 \begin{equation}\label{eq:themodel}
-\log(\mathit{Obesity})_i = f(\vect{x}_i, CS_i, g(W, \mathit{Obesity}, \vect{X}))
+\log(y_i) = f(\vect{x}_i, CS_i, g(W, \mathit{Obesity}, \vect{X}))
 \end{equation}
 <<base_formula>>=
 base_formula <- formula( 
@@ -485,12 +500,14 @@ base_formula <- formula(
     Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
     black + asian + hispanic + other)
 @
-where $\vect{x}_i$ is a vector of tract-level attributes, $CS_i$ is a choice-based
-accessibility measure for the tract computed from Equations \ref{eq:v_sd} or 
-\ref{eq:v_sdt}, and $g(W, \mathit{Obesity}, T)$
-represents the impact of spatial neighborhood effects on the outcome.
+where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes, 
+$CS_i$ is a choice-based
+accessibility measure for the tract computed from Equation \ref{eq:cs} and 
+$g(W, \vect{y}, X)$
+represents the impact of spatial neighborhood effects on the outcome. 
+
 Using tracts as the unit of observation in the model allows us to consider the
-availability of parks at a metropolitan level, but it also introduces the problem
+availability of parks at a sub-metropolitan level, but it also introduces the problem
 of spatial correlation of unobserved errors and spatial dependence in the data
 generating process \citep{Cliff1970, Anselin1980}. Spatial correlation occurs
 when spatially-distributed unobservable or missing variables (school quality,
@@ -529,7 +546,6 @@ pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "g
   st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
   st_transform(2263)
 
-
 tracts.dnn <- dnearneigh(gCentroid(as(pop_weighted_centroids, "Spatial"), byid = TRUE), 
                          0, 1.8 * 5280)
 dists <- nbdists(tracts.dnn, gCentroid(tracts, byid = TRUE))
@@ -557,7 +573,7 @@ attributes can attained via Monte Carlo simulation. In this study we use the
 \texttt{spdep} package for R \citep{Bivand2013} for model estimation and impact
 simulation.
 
-\subsection{Accessibility}
+\subsection{Accessibility}\label{subsec:accessibility}
 
 Extant destination choice models used in practice typically use travel time in
 minutes as a travel impedance term, and employment by sector as a size term or
@@ -611,6 +627,7 @@ size be positive and that on distance negative; all else equal, we assert people
 will prefer to use larger parks and parks that are nearer to their residence. This
 resulted in $\beta_d = -0.42$  and $\beta_s = 0.000$. Given our expectation that
 park size is a valuable attribute, we subsequently adjusted this value to
+a value of $1.00$. This implies that each mile
 
 <<distances, warning=FALSE>>=
 # calculate centroids of tracts and parks
@@ -642,7 +659,7 @@ tracts_sf <- tracts %>% st_as_sf() %>% st_transform(4326)
 
 <<leaflet, eval=FALSE>>=
 # this interactive map is much easier to create and explore
-pal <- colorQuantile("Spectral", tracts_sf$access_ls, n = 5)
+pal <- colorQuantile("GnBu", tracts_sf$access_ls, n = 5)
 leaflet(tracts_sf) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(group = "access", color = ~ pal(access_ls), 
@@ -657,11 +674,12 @@ leaflet(tracts_sf) %>%
 
 <<map, echo=FALSE, message=FALSE, warning=FALSE>>=
 library(ggmap)
-map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner"),
+map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
 map +
   geom_sf(data = tracts_sf, inherit.aes=FALSE, 
-          aes(fill = cut(access_ls, quantile(access_ls))), alpha = 0.8) +
+          aes(fill = cut(access_ls, breaks = c(-Inf, -3, -2, -1, 0, 2, 3, Inf))),
+          alpha = 0.8) +
   scale_fill_brewer("Relative Park Logsum", palette = "GnBu")
 @
   \caption{Relative surplus-based accessibility in New York City}
@@ -671,42 +689,149 @@ map +
 \section{Results}
 
 <<spatial selection>>=
-obese_base_sem <- errorsarlm(update(base_formula, log_obesity ~ .), 
+physact_base_sem <- errorsarlm(update(base_formula, log_physact ~ .), 
                              data = tracts@data, listw = W, zero.policy = TRUE)
-obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ .), 
+physact_base_sdm <- lagsarlm(update(base_formula, log_physact ~ .), 
                            data = tracts@data, listw = W, zero.policy = TRUE, 
                            type = "mixed")
-test_sdmsem <- lmtest::lrtest(obese_base_sem, obese_base_sdm)
+test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 @
 
-We estimated the A likelihood ratio test rejects that the SEM is equivalent, so we use the SDM
-only going forward.
+
 
 <<access_sdm>>=
 # estimate models
-access_sdm <- update(obese_base_sdm, .~ . + access_ls)
-tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
+pa_access_sdm <- update(physact_base_sdm, .~ . + access_ls)
+pa_tweets_sdm <- update(physact_base_sdm, .~ . + tweets_ls)
 @
 
+We estimated SDM and SEM models regressing the physical activity rate against
+against the base covariates (without the accessibility logsum). A likelihood 
+ratio test rejects that the SEM is equivalent 
+($\chi^2 = \Sexpr{test_sdmsem$Chisq[2]}$ on \Sexpr{test_sdmsem$Df[2]} degrees of 
+freedom), so we use the SDM specification only going forward. Table 
+\ref{tab:pa_models} presents the estimated coefficients for the base model as 
+well as models including logsum-based accessibility with and without Twitter
+activity. A few initial observations can be made from this table. First, adding
+the logsum measurement significantly improves the overall model fit, using a
+likelihood ratio test on the model log-likelihood statistics. Second, the
+coefficient estimates on the controlling variables remain virtually unchanged 
+from the base model. 
 
 \begin{table*}
-  \caption{Estimated Coefficients on Obesity}
-  \label{fig:obeseity_models}
-<<modelchart, results="asis">>=
-library(texreg)
-obesity_models <- list(Base = obese_base_sdm, `Access` = access_sdm, 
-                       `Access + Tweets` = tweets_sdm)
-texreg(obesity_models, digits = 4, table = FALSE, single.row = TRUE, 
+  \caption{Estimated Coefficients Relating Park Access to Physical Activity}
+  \label{tab:pa_models}
+<<pamodelchart, results="asis">>=
+pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm, 
+                       `Access + Tweets` = pa_tweets_sdm)
+texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE, 
        booktabs = TRUE, use.packages = FALSE)
+#' screenreg(pa_models, digits = 4, table = FALSE) 
 @
 \end{table*}
 
+Recall from the presentation of spatial econometrics above that the total effect of a
+covariate on the dependent variable is different from the estimated coefficient
+and involves interaction between direct and indirect effects, or between 
+the $\beta$ and $\gamma$ parameters. This is particularly important when the
+$\beta$ and $\gamma$ estimates for a particular covariate show a different
+sign, such as in the proportion of black residents in a census tract, as 
+interpreting the direction and magnitude of the relationship is not straightforward.
 
 
 
+<<extract_impacts>>=
+#' Get the MC simulated impact coefficients and significance from a model
+#' @param sdm An autoregressive lag (SAR or SDM) model object `lagsarlm`
+#' @return A data frame with the effect (direct, indirect, total), variable, 
+#'   simulated mean impact, and significance p-value
+extract_impacts <- function(sdm) {
+  
+  impacts_summary <- summary(
+    impacts(sdm, tr=trMC,  R = 1000, useHESS = !is.logical(sdm$fdHess)), 
+    zstats = TRUE)
+  
+  estimate <- list(
+    Direct = impacts_summary$direct_sum,
+    Indirect = impacts_summary$indirect_sum,
+    Total = impacts_summary$total_sum
+  ) %>%
+  lapply(function(s) {
+    data_frame(
+      term = names(s$statistics[,1]),
+      estimate = s$statistics[,1],
+      std.error = s$statistics[,2]
+    )
+  }) %>%
+    bind_rows(.id = "effect") 
+    
+  
+  pval <- as_data_frame(impacts_summary$pzmat) %>%
+    mutate(
+     term = rownames(impacts_summary$pzmat)
+    ) %>%
+    gather("effect", "p-val", -term)
+  
+  
+  left_join(estimate, pval, by = c("effect", "term"))
+}
+@
+
+\begin{table*}
+  \caption{Simulated Impact of Accessibility on Physical Activity}
+  \label{tab:pa_impacts}
+<<impacts>>=
+physact_impacts <- pa_models %>%
+  lapply(extract_impacts) %>%
+  bind_rows(.id = "model") %>% ungroup() %>%
+  rename(submodel = effect)
 
 
-\section{Conclusion}
+effect_estimate <- physact_impacts %>% 
+  filter(model == "Access + Tweets", term == "tweets_ls", submodel == "Total") %>% 
+  pull(estimate) 
+
+density_estimate <- physact_impacts %>% 
+  filter(model == "Access + Tweets", term == "log(density)", submodel == "Total") %>% 
+  pull(estimate) 
+
+physact_impacts %>%
+  transmute(
+    model, term, submodel, estimate,
+    output = paste(round(`p-val`, 5), 
+                   gtools::stars.pval(`p-val`))
+  ) %>%
+  filter(term %in% c("access_ls", "tweets_ls")) %>%
+  select(-term) %>%
+  kable("latex", booktabs = T, escape = FALSE, 
+        col.names = c("Logsum Measure", "Effect", "Estimate", "$p$-value"))
+@
+\end{table*}
+
+Table \ref{tab:pa_impacts} shows the simulated marginal impact of the
+accessibility logsum measurements on the physical activity rate in each tract.
+Given that the logsum is a relatively continuous measure over space, and that it
+would be difficult to improve the park accessibility of a tract without also 
+improving the accessibility of the tract's neighbors, the total effect combining
+the direct effect and the indirect effects of all neighbors is 
+most appropriate. The total effect of tract-level accessiblity on physical 
+activity rates is strongly significant, regardless of whether we consider Twitter
+activity. 
+
+It is of course necessary to also consider the magnitude of the effect. 
+As this is a semi-log model, the coefficient implies a unit increase
+in the access and tweets logsum leads to a 
+\Sexpr{round(effect_estimate * 100, 3)}\% increase in the physical activity rate. 
+Referring to the map of logsum measures in Figure \ref{fig:map}, the measures
+span from roughly $-3$ in heavily industrialized segments of southern Brooklyn
+to roughly $3$ in tracts immediately adjacent to Central Park on the Upper East
+Side. Thus moving from the least accessible parts of the city to the most
+accessible will reduce the expected physical activity rate by 
+\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. For an aggregate statistic, this 
+is not an insubstantial marginal effect.
+
+
+\section{Discussion}
 
 
 \begin{funding}
