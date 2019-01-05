@@ -64,147 +64,69 @@ library(leaflet)
 
 @
 
+
 \section{Introduction}
 
 The United States is currently facing an epidemic of obesity and chronic
 diseases, which are non-communicable diseases of long duration and typically
 slow development, including cardiovascular diseases, chronic respiratory
-diseases, diabetes, stroke, joint and bone diseases, and cancer. The \citet{WHO2014} estimates approximately 300,000
-premature deaths in the United States each year can be attributed to chronic diseases.
-\citet{Finkelstein2009} find an
-obese American spends nearly \$1,500 more per year in health care costs than an
-American of normal weight. As obesity and chronic disease
-have become rampant, it is no surprise that healthcare costs have risen to
-nearly one-fifth of the United States’ gross domestic product \citep{Harnik2011}.
+diseases, diabetes, stroke, joint and bone diseases, and cancer \citep{WHO2014}
+Recent statistics suggest that approximately 300,000 premature deaths each year
+can be attributed to chronic diseases \citep{WHO2014}.
+According to \citet{Finkelstein2009}, obese Americans spend approximately
+\$1,500 more in healthcare costs annually than Americans of
+average weight, totaling \$147 billion in direct medical expenses nationally.
 
 While a moderate amount of regular physical activity has been established as an
 effective strategy for reducing and managing obesity and many of the
-aforementioned chronic diseases \citep{Gordon2013}.
-\citeauthor{Wolf2008} notes that “more than 50 percent of U.S. adults do not get
-enough physical activity to provide health benefits; 24 percent are not active
-at all in their leisure time. Activity decreases with age and sufficient
-activity is less common among women than men, and among those with lower incomes
-and less education” \cite[22]{Wolf2008}. Similarly, the United States Department of
-Health and Human Services notes that less than fifty-percent of Americans meet
-established recommendations for moderate to vigorous physical activity, or MVPA
-(U.S. DHHS 2010). As the epidemiological transition from infectious to chronic
-diseases is now complete in the developed world, increasing physical activity
-has become a vital public health task in the 21st century.
+aforementioned chronic diseases \citet{CDC2009, Durstine2013},
+\citet{Wolf2008} notes that “more than 50 percent of U.S. adults do not get enough
+physical activity to provide health benefits; 24 percent are not active at all
+in their leisure time. Activity decreases with age and sufficient activity is
+less common among women than men, and among those with lower incomes
+and less education” (p. 22). As the epidemiological transition from
+infectious to chronic diseases is now complete in the developed world,
+increasing physical activity has become a vital public health task in the 21st
+century.
 
-Research has shown that the design of the built environment influences a range
-of behaviors, including those related to physical activity. The presence of
-trees and other vegetation in outdoor environments have been shown to be
-positively associated with physical activity \citep{Pretty2005}; one finding
-suggests that after sidewalks and trails have been constructed, the introduction
-of natural elements positively impacts motivation to engage in physical activity
-\citep{Suminski2005}. Additional evidence indicates that commonly vegetated
-areas, such as parks and open space, support outdoor physical activity
-\cite{Giles-Corti2005, Wells2007}. Perhaps most telling is the
-finding that “people in large cities perceive themselves to be generally
-healthier if a greater percentage of the living environment is greenspace, are
-inclined to be more active, and claim the ability to relax faster”
-\cite[24]{Wolf2008}. Thus, by providing space for active recreation, public
-parks and greenspaces may increase the likelihood of engaging in more physical
-activity. As such, public investment in parks can be thought of as a public
-health intervention for chronic diseases and conditions, as well as general
-population health.
-
-To date, the literature exploring the relationship between parks and health
-outcomes, specifically those related to physical activity and obesity, has
-yielded mixed results. Importantly, there is considerable variation in the
-design of past studies, including the spatial scale of analysis, the population
-of interest, and the measure of proximity and/or accessibility. While studies of
-neighborhood level health impacts do exist, they typically focus on discrete
-populations of interest within individual parks instead of examining the impacts
-of larger park networks \citep{Bancroft2015, Coutts2008}.
-Other studies have used the city and metropolitan statistical area as the
-spatial scale of analysis, which
-in some cases has resulted in the discovery of positive associations between
-increased park space and positive health impacts but may conceal more nuanced
-relationships that exist at smaller spatial scales \citep{Larson2016}.
-Evaluating the health impacts of parks and greenspaces using a smaller
-unit of analysis is an important research gap to fill, especially considering
-that park use and physical activity within parks varies considerably according
-to residential proximity to parks and park facilities as well as a number of
-sociodemographic factors \citep{Kaczynski2014}. There are important urban
-design considerations here; is it better to build a single large park with many
-different amenities, or to build a series of smaller parks nearer people’s
-homes. Similarly, do parks placed near low-income households affect the behavior
-of those households? This study attempts to fill that gap using New York City as
-a case study example. Using a new measure of park access called ‘Park Choice
-Accessibility,’ we find
-
-\section{Existing Literature}
-
-\subsection{Urbanization and Public Health Outcomes}
-Across the world, the population of cities is growing at an unprecedented rate.
-With a current estimated global urban population of over 3.5 billion people, the
-United Nations Population Fund estimates that by 2030, 5 billion people will
-inhabit cities worldwide.  By 2050, an additional 3 billion people will live in
-cities – a sixty percent increase over twenty years – with much of this growth
-expected to take place in the developing world (United Nations Population Fund,
-2016). Despite the greater expected concentration of urban growth in other parts
-of the globe, the trend of urbanization is highly visible in the United States
-as well.  According to the U.S. Census Bureau, ''The nation's urban population
-increased by 12.1 percent from 2000 to 2010, outpacing the nation's overall
-growth rate of 9.7 percent for the same period.'' \citet{Nowak2005}
- estimate that urban land area as a percentage of total land area in the
-U.S. will increase from 3.1\% in 2000 to approximately 8.1\% by the year 2050,
-with urbanized places collectively comprising a land area larger than the state
-of Montana. More than eighty percent of the U.S. population now lives in
-urban areas, compared to sixty-four percent in 1950 (United States Census Bureau
-2007).
-
-The global trend of urbanization has profound implications for population
-health, both positive and negative. Because urbanization corresponds with an
-increase in population density compared to rural and suburban settlement
-patterns, residents of dense urban areas throughout the world have better access
-on average to many health services and health-promoting amenities simply because
-of their closer proximity to such resources \citep{Larson2016}.
-However, despite this benefit of increased density and the ability of cities to
-provide many opportunities for innovation, economic growth and social progress,
-historical and current evidence suggests that rapid urban growth often leads to
-congestion and numerous negative environmental and human health outcomes.
-Interactions between growing urban populations and their environment, marked by
-intensive resource consumption and ecologically harmful patterns of development,
-lead to numerous undesired consequences including pollution and sanitation
-issues as well as racial and socioeconomic disparities \citep{Larson2016}.
-
-Because of the considerable growth of urbanization throughout the world, many
-city planning and public health professionals have begun to pay more attention
-to the role of the built environment in promoting or discouraging health
-behaviors. Until recently, most large-scale health promotion efforts focused on
-individual-level interventions intended to educate people about health
+Until recently, most large-scale health promotion efforts focused on
+individual-level interventions intended to educate people about healthy
 lifestyles and behaviors, touching on topics including diet and exercise.
 According to \citet{Coutts2008} however, this trend is shifting as professionals
-''have begun adopting an ecological paradigm, accepting that both individual and
+“have begun adopting an ecological paradigm, accepting that both individual and
 environmental determinants play a role in health behavior. This new, arguably
 revisited, public-health paradigm accounts not only for the compositional (who
 you are) but also for the contextual (where you are) influences on physical
-activity.'' As professionals begin to operate from the assumption that the design
+activity.” As professionals begin to operate from the assumption that the design
 and configuration of the built environment can facilitate or inhibit physical
 activity, they are increasingly looking to public spaces like parks and
 greenways as key elements of the built environment that can support exercise
-\citet{Coutts2008, Bedimo-Rung2005}.
+\citep{Bedimo-Rung2005a}.
 
-\subsection{Review of the Health Benefits of Parks}
-A large body of literature exists documenting the many benefits of urban parks
-and greenspaces to human health and wellbeing. Importantly, these benefits stem
-from the provision of ecosystem services, which occur when the natural
-environment supplies something that people demand, improving quality of life and
-well-being \citep{Larson2016}. These services can include the
-provisioning of goods such as fresh water and agricultural products; regulatory
-functions including protection of drinking water quality, heat mitigation, air
-purification, and stormwater management; and cultural functions, such as
-improving aesthetics, providing opportunities for recreation, tourism, and
-physical and mental health, and promoting biodiversity \citep{McDonald2015}.
-According to \citet{Wolch2014}, parks and greenspaces provide ''\ldots a wide
-range of ecosystem services that could help combat many urban ills and improve
-life for city dwellers—especially their health…Ecosystem services provided by
-urban greenspace not only support the ecological integrity of cities, but can
-also protect the public health of urban populations.'' Table
-\ref{tab:parkbenefits} summarizes commonly cited benefits of parks and
-greenspaces.
+In this paper, we present a holistic and flexible measurement for park
+accessibility based in random utility theory. This measure can consider the continuous
+distance to all parks in the region, weighted by the size of the park and other
+amenities. We apply this measurement to study the link between park
+accessibility and attractiveness and Census tract-level aggregate physical
+activity participation and obesity rates in New York City, controlling for
+spatial correlation and dependence. We find a positive relationship where the
+least park-accessible tracts have an expected physical activity participation
+rate 3.8 percent lower than the most accessible tracts, controlling for
+socioeconomic characteristics. We also find that increased physical activity
+rates lead to reduced aggregate obesity rates, but that when controlling for
+physical activity rates, accessibility to parks does not reduce overall accessibility.
+This suggests that to be an effective tool for addressing chronic diseases,
+communities must do more than simply provide parks, but also incentivize more
+citizens to use them.
+
+\section{Literature Review}\label{sec:litreview}
+
+Numerous previous studies have found relationships between aspects of the built
+environment and aspects of physical, mental, social, and economic health. Many
+of these findings are summarized in Table \ref{tab:parkbenefits}.
+For the purposes of this study, it is clear that parks and other
+vegetated areas support outdoor physical activity in ways distinct from other
+urban environments \citep{Giles-Corti2005, Wells2007}.
 
 \begin{table*}[ht]
   \caption{Commonly cited benefits of parks and greenspaces}
@@ -214,41 +136,37 @@ greenspaces.
 Category & Summary of Benefits\\
 \midrule
 Physical Health & Provide clean drinking water \citep{Benedict2006}\\
- & Foster increased physical activity\\
  & Promote faster healing in hospitals \citep{Akbari2001}\\
- & Reduce of heat-related mortality \\
- & Reduce incidence of cardiovascular-related mortality \\
+ & Reduce heat-related mortality \citep{Stone2006}\\
+ & Reduce incidence of cardiovascular-related mortality \citep{Mitchell2008}\\
  & Improved air quality and related reductions in respiratory-related mortality \citep{Lovasi2008}\\
- & Reduce incidence of childhood asthma \citep{Wolf2008}\\
- & Improve birth outcomes\\
 \midrule
-Mental Health & Reduce stress and mental fatigue\\
-  & Reduce aggression\\
+Mental Health & Reduce stress and mental fatigue \citep{Wolch2014}\\
+  & Reduce aggression \citep{Kuo2001a}\\
   & Enhance emotional and cognitive development\\
   & Improve behavioral outcomes in youth \\
 \midrule
 Social Health & Enhanced community aesthetics\\
- & Reduce crime\\
- & Increase social interaction \\
+ & Reduce crime \citep{Kuo2013,Wolfe2012}\\
+ & Increase social interaction \citep{Sullivan2004}\\
 \midrule
-Economic Health & Provide of ecosystem services\\
+Economic Health & Provide ecosystem services\\
  & Increase residential property values and municipal property tax revenues\\
  & Attract more shoppers and increase economic activity to commercial districts \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
-Given the general benefits of parks and greenspaces in Table \ref{tab:parkbenefits}, several studies
-have attempted to quantify the impacts of these spaces on different facets of
-health and wellbeing at the city level, yielding mixed results. \citet{Larson2016}
+In spite of these generally positive findings, the evidence of a specific link
+between green space and physical activity is somewhat mixed.
+\citet{Wolf2008} report
+residents self-identify as more active and attaining a higher quality of life when
+a greater portion of the environment is greenspace.
+\citet{Larson2016}
 used self-reported scores on the Gallup-Healthways Wellbeing
-Index to evaluate the relationship between different areas of wellbeing,
+Index (citation) to evaluate the relationship between different areas of wellbeing,
 including physical health, and park quantity, quality, and accessibility in 44
-U.S. cities. The authors found that “Park quantity (measured as the percentage
-of city area covered by public parks) was among the strongest predictors of
-overall wellbeing, and the strength of this relationship appeared to be driven
-by parks’ contributions to physical and community wellbeing” (Larson, Jennings \&
-Cloutier 2016). While the authors found positive associations between wellbeing
+U.S. cities. While the authors found positive associations between wellbeing
 and park quality and accessibility, these relationships were not statistically
 significant. A study by \citet{West2012} used park data from the
 Trust for Public Land’s 2010 City Park Facts and public health data from the
@@ -257,86 +175,78 @@ between the density of parkland, parkland per capita, and levels of physical
 activity and obesity for 67 metropolitan statistical areas in the U.S. The study
 found a significant, positive association between park density and physical
 activity and a significant, negative association between park density and
-obesity. In a study of New York City, \citet{Stark2014} found that the
-“proportion of neighborhoods that was large or small park space and park
-cleanliness were associated with lower BMI among NYC adults after adjusting for
-other neighborhood features such as homicides and walkability, characteristics
-that could influence park usage.”
-
-Interestingly, in a study by \citet{Richardson2012} that examined the
-relationship between urban greenspace and selected mortality rates, the authors
+obesity.
+Conversely, \citet{Richardson2012} examined the
+relationship between urban greenspace and selected mortality rates, and though the authors
 did not find a statistically significant relationship between the quantity of
 urban greenspace and mortality caused by lung cancer, diabetes, heart disease or
-car accidents, but found that all-cause mortality was significantly higher in
-greener cities. In a meta-analysis of 20 peer reviewed journal articles
+car accidents, they did find that all-cause mortality was significantly higher in
+greener cities.
+In a meta-analysis of 20 peer reviewed journal articles
 exploring the relationship between parks and objectively measured physical
 activity, \citet{Bancroft2015} found that five studies reported a significant
 positive association between the two, six studies produced mixed results, and
 nine studies found no association at all.
 
+
 While several of the aforementioned studies yielded results consistent with the
 hypothesis that park access and use confer health benefits stemming from
 increased physical activity and attendant decreases in obesity, all of the
-studies  -- except some that were included in the meta-analysis by
-\citet{Bancroft2015} -– were conducted at the level of the city or metropolitan statistical
-area, potentially concealing variation in health outcomes at more fine-grained
-levels of analysis \citep{Larson2016}.
+studies -- except some included in the meta-analysis by \citet{Bancroft2015} -–
+were conducted at the level of the city or metropolitan statistical area.
+Metropolitan-level analyses do not capture the within-city variation in
+accessibility to parks that exists. Some cities with large amounts of total
+greenspace may nevertheless inequally distribute this space throughout the city
+leading to areas with poor access. Conversely, a city with a smaller overall
+proportion of greenspace may give all of its citizens better access to significant
+greenspace. Considering access at the neighborhood level within a single city
+may eliminate some regional or cultural fixed effects affecting
+metropolitan-level analyses.
 
-\subsection{Accessibility to Parks}
-To evaluate the impacts of parks and greenspaces on health outcomes at any
-scale, one of the fundamental tasks involved is the selection of a measure of
-accessibility. In a comprehensive meta-analysis of published studies that
-measure active accessibility (accessibility using non-motorized travel modes
-including walking and cycling), \citet{Vale2016} identified four
-broad categories of studies based on the active accessibility metric employed:
-“distance-based, gravity-based or potential, topological or
-infrastructure-based, and walkability and walk score-type measures.”
-Distance-based measures account only for the Euclidean distance between origins
-and destinations, while infrastructure-based measures explicitly incorporate
-relevant transportation networks like roads and sidewalks to more accurately
-measure travel time and distance. Gravity-based measures incorporate cost
-measures to model accessibility as a function of a destination’s attractiveness
-(i.e., size, commercial activity, etc.) and the cost of traveling to that
-destination from a given origin (i.e., travel time or distance).
+In a study of neighborhoods in New York City, \citet{Stark2014} found that a
+higher proportion of park space in a neighborhood was associated with a lower
+BMI for its residents. \citet{Pretty2005} showed the presence of trees and other
+vegetation in outdoor environments is positively associated with physical
+activity; further, \citet{Suminski2005} showed that adding vegetation to
+existing sidewalks and trails increased local motivation to engage in physical
+activity.
+
+To evaluate the impacts of parks and greenspaces on health outcomes at a
+sub-metropolitan level, one of the fundamental tasks involved is the selection
+of a measure of accessibility. In a comprehensive meta-analysis of published
+studies that measure active accessibility (accessibility using non-motorized
+travel modes including walking and cycling), \citet{Vale2016} identified four
+broad categories of studies based on the metric employed:
+\begin{description}
+  \item[Distance-based]{Account only for the Euclidean distance between origins
+  and destinations}
+  \item[Infrastructure-based]{Explicitly incorporate
+  relevant transportation networks like roads and sidewalks to more accurately
+  measure travel time and distance}
+  \item[Gravity-based]{Incorporate travel impedance
+  measures to model accessibility as a function of a destination’s attractiveness}
+  \item[Walk-score]{Similar to Gravity-based, with the impedance measure
+  explicitly designed around walking}
+\end{description}
 
 Importantly, \citeauthor{Vale2016} acknowledge that there is not yet a
 consensus on the most appropriate accessibility metric to use in a given
 setting, noting that ''ways to measure active accessibility are as varied as the
-number of scholars the measure them.'' However, their meta-analysis
-highlights some of the limitations associated with each of the types of metrics
-described. For example, in describing distance-based accessibility measures, the
-authors note that such measures are ''extremely sensitive to the way in which
-travel impedance (i.e., distance) is measured. Accordingly, four types of
-distance can be identified: Euclidean distance, Manhattan distance, shortest
-network distance, and shortest network time''. The
-appropriateness of one distance-based measure over another can vary
-significantly depending on the topography of the environment and the travel mode
-that is being employed. In describing gravity-based accessibility measures,
-which ''assume that travel is a derived demand and there is a tradeoff between
-the benefit of the opportunity and the cost to reach it from a given origin,''
-the authors note that such measures do not always explicitly account for land
-use characteristics near origins and destinations, which may impact that true
-accessibility of those places.
-
-
+number of scholars the measure them.'' For example, infrastructure-based distances
+can vary widely depending on which modes of travel infrastructure are considered.
+Similarly, gravity-based measures may not always account for surrounding land
+uses when considering the attractiveness or impedance of a destination.
 In evaluating methodologies of measuring access to urban services, including
 parks and greenspaces, \citet{Logan2017} note that existing and commonly used
-approaches “often simplify their measure of proximity by using large areal
-units and by imposing arbitrary distance thresholds,” which often results in
-access-poor populations being overlooked. The authors concede that many
-existing approaches have long been necessary because the computational power
-required to use higher-resolution analytical techniques was unavailable.
-However, due to recent advances in computation power and the advent of
-municipal open-data policies, \citeauthor{Logan2017} recommend that future
-analyses of accessibility disaggregate population data to the building or
-parcel level and use network distance instead of Euclidean distance to measure
-proximity.
+approaches "often simplify their measure of proximity by using large areal
+units and by imposing arbitrary distance thresholds," which often results in
+access-poor populations being overlooked.
 
 \subsection{Choice-based Accessibility}
 
 Consider that an individual is choosing a park for a recreation activity.
 If we apply random utility choice theory, specifically the multinomial
-logit model \citep{McFadden1974}, the expected probability of individual 
+logit model \citep{McFadden1974}, the expected probability of individual
 $i$ choosing park $j$ from the set of all regional parks $J$ is
 \begin{equation}\label{eq:mnl}
 P(j | V_{ij}) = \frac{\exp(V_{ij})}{\sum_{p \in J}\exp(V_{ip})}
@@ -348,44 +258,57 @@ the choice maker or the park. In this study we use a linear formulation of
 V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d
 \end{equation}
 incorporating the size of the park in acres and the distance of the park from
-the census tract $i$ in miles. The coefficients $\vect{\lambda}$ can be 
-estimated from household surveys, though in the absence of a survey we 
+the census tract $i$ in miles. The coefficients $\vect{\lambda}$ can be
+estimated from household surveys, though in the absence of a survey we
 may assert reasonable values.
 
 A key theoretical outcome of random utility choice models is that the
-consumer surplus, or the total value of all alternatives of the choice set, can 
-be obtained as the log-sum of the denominator of the choice probability equation:
+consumer surplus, or the total value of all alternatives of the choice set, can
+be obtained as the log-sum of the denominator of the choice probability equation
+\citep{Small1981}:
 \begin{equation}\label{eq:cs}
 CS_i = \ln\left({\sum_{p \in J}\exp(V_{ip})}\right)
 \end{equation}
 There are several advantages to a log-sum defined metric relative to
 buffer-based accessibility metrics more commonly found in the literature. First,
 all individuals are defined as having some access to all parks, rather than an
-arbitrary cutoff asserted by the researcher. This allows for the fact that some 
-people are more or less sensitive to distances, and that distance is a 
-continuous, and not a binary, phenomenon. Second, the random utility 
-formulation allows the researcher to include any attribute of the park; 
-in this case, we consider the
-size of the park as an element of accessibility. This suggests that not all
-parks are equal, and that a large park such as Central Park on Manhattan may
-provide health and activity benefits over a much larger area than a smaller
+arbitrary cutoff asserted by the researcher. This allows for the fact that some
+people are more or less sensitive to distances, and that distance is a
+continuous, and not a binary, phenomenon. Second, the random utility formulation
+allows the researcher to include any attribute of the park; in this case, we
+consider the size of the park as an element of accessibility. This suggests that
+not all parks are equal, and that a large park such as Central Park on Manhattan
+may provide health and activity benefits over a much larger area than a smaller
 community square.
 
 Note that this formulation is an extension of the gravity-based accessibility
 statistics, in the same way that the gravity model is a specific case of
-a destination-choice model \citep{Daly1982}. The extension allows us to consider
-more attributes of the park or the indivdual beyond size and impedance. For example,
-we can aggregate the number of tweets emanating from a park as a measure of the
-park's attractiveness beyond its size, and the utility for the choice maker from 
-Equation \ref{eq:v_sd} then becomes
+a destination-choice model \citep{Daly1982}. But the extension is meaningful, and
+allows us to consider more attributes of the park or the indivdual beyond size
+and impedance. For example, we can aggregate the number of tweets emanating from
+a park as a measure of the park's attractiveness beyond its size, and the
+utility for the choice maker from Equation \ref{eq:v_sd} then becomes
 \begin{equation}\label{eq:v_sdt}
 V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d + tweets_j\lambda_t
 \end{equation}
 
+In spite of its advantages, logsum-based accessibilities have not received
+as much application in the accessibility literature as distance-based or even
+gravity-based measures. They are commonly used, however, in alternatives analyses of
+transit infrastructure improvements \citep{DeJong2007}. A reason for this is
+likely that such analyses are usually conducted in the context of a travel
+demand model, where calibrated and multimodal logsums are readily available
+\citep{Geurs2010}.
 
 \section{Empirical Methodology}
+In this section we describe an experiment with data for New York City, where
+we compute a holistic logsum-based accessibility component and model the
+relationship between this measure and physical activity rates, controlling for
+spatial effects and socioeconomic factors.
 
 \subsection{Data}
+This study uses data available to the public from a variety of agencies and
+data providers.
 
 <<tracts>>=
 tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
@@ -421,17 +344,17 @@ tracts@data <-  tbl_df(tracts@data) %>%
     Pct0to17, Pct18to29, Pct65plus,
     Income1, Income2, Income3, Income4, Income5, Income6,
     Income7, Income8, Income9, Income10
-  ) 
+  )
 @
 
-This study used data available to the public from a variety of agencies and
-data providers.
-We obtained data on aggregate health outcomes from the Centers for Disease
-Control and Prevention (CDC) for census tracts in five boroughs of New York City.
-After removing tracts with missing population information, we have
-Sexpr{nrow(tracts)} complete cases. Table \ref{tab:tractsdata} presents key
-descriptive statistics for these data.
-
+The primary dataset is a geographic polygons shapefile of Census tracts in
+New York City. We appended relevant sociodemographic data for each tract level
+from the American Community Survey 2011-2015 5-year estimates. Data on physical
+activity participation rate and obesity rates for each tract are available from
+the Centers for Disease Control and Prevention’s 500 Cities Project.
+After removing tracts with missing population information or outlying and unusual
+characteristics, we have Sexpr{nrow(tracts)} complete cases. Table
+\ref{tab:tractsdata} presents key descriptive statistics for these data.
 
 \begin{table*}
   \caption{Summary Statistics of Tract Data}
@@ -448,63 +371,70 @@ our_summary <- list(
 summary_table(tracts@data, our_summary) %>%
   kable("latex", booktabs = T, escape = FALSE) %>%
   group_rows("Obese: percent of tract which is obese", 1, 4) %>%
-  group_rows("Physical Activity: Percent of tract reporting physical activity", 5, 8) %>%
+  group_rows("Physical Activity: percent of tract reporting physical activity", 5, 8) %>%
   group_rows("Population Density: individuals per square mile", 9, 12)  %>%
   group_rows("Full Time: percent of adults who work full time", 13, 16) %>%
   group_rows("College: percent of adults with a college degree", 17, 20)
 @
 \end{table*}
 
+In a destination choice framework, the tracts represent the "origins" and
+"destinations" are parks in New York City.
+We retrieved a shapefile of public parks and greenspaces within New York City’s
+municipal boundaries and checked it for accuracy and relevance. Upon inspection,
+we removed several facilities that do not qualify as publicly accessible green
+space, such as Yankee Stadium and its surrounding parking lots. We also removed
+parks of less than half an acre in size, as these appear to be predominantly
+vacant lots or parking strips rather than legitimate public green space.
+
 <<parks>>=
 parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
   transmute(
     size = Park_Acres,
     log_size = log(Park_Acres),
-    tweets = TWEET_COUNT, 
+    tweets = TWEET_COUNT,
     log_tweets = yeo.johnson(TWEET_COUNT, 0)
-  ) %>% 
+  ) %>%
   filter(size > 0.5)
 @
 
-We also collected data on park geometry, limited to parks larger than 0.5 acres.
+
 
 \begin{table*}
   \caption{Summary Statistics of Parks Data}
   \label{tab:parksdata}
-<<parks_summary, results="asis", message=FALSE, warning=FALSE, eval = FALSE>>=
+<<parks_summary, results="asis", message=FALSE, warning=FALSE, cache = FALSE>>=
 park_summary <- list(
   "size"     = tab_summary(parks$size),
   "tweets"   = tab_summary(parks$tweets)
 )
 
 summary_table(as_data_frame(parks), park_summary) %>%
-  kable("latex", booktabs = T, escape = FALSE, col.names = c("")) %>%
-  group_rows("Size: size of park in acres", 1, 4) %>%
-  group_rows("Tweets: number of tweets emanating from park", 5, 8)
+  kable("latex", booktabs = T, escape = FALSE, col.names = c("Parks"))
 @
 \end{table*}
 
 
 \subsection{Model}\label{subsec:model}
 
-We predict the rate of physical activity ($y$) in a census tract as a 
-function of the tract's sociodemographic characteristics and choice-based 
+We predict the rate of physical activity ($y$) in a census tract as a
+function of the tract's sociodemographic characteristics and choice-based
 accessibility to parks with a semi-log specification:
 \begin{equation}\label{eq:themodel}
 \log(y_i) = f(\vect{x}_i, CS_i, g(W, \mathit{Obesity}, \vect{X}))
 \end{equation}
 <<base_formula>>=
-base_formula <- formula( 
-  ~ log(density) + 
-    fulltime + college + single + 
-    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
+base_formula <- formula(
+  ~ log(density) +
+    fulltime + college + single +
+    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
     black + asian + hispanic + other)
 @
-where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes, 
+where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes,
 $CS_i$ is a choice-based
-accessibility measure for the tract computed from Equation \ref{eq:cs} and 
+accessibility measure for the tract computed from Equation \ref{eq:cs} and
 $g(W, \vect{y}, X)$
-represents the impact of spatial neighborhood effects on the outcome. 
+represents the impact of spatial neighborhood effects on the outcome.
 
 Using tracts as the unit of observation in the model allows us to consider the
 availability of parks at a sub-metropolitan level, but it also introduces the problem
@@ -546,7 +476,7 @@ pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "g
   st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
   st_transform(2263)
 
-tracts.dnn <- dnearneigh(gCentroid(as(pop_weighted_centroids, "Spatial"), byid = TRUE), 
+tracts.dnn <- dnearneigh(gCentroid(as(pop_weighted_centroids, "Spatial"), byid = TRUE),
                          0, 1.8 * 5280)
 dists <- nbdists(tracts.dnn, gCentroid(tracts, byid = TRUE))
 dists.inv <- lapply(dists, function(x) 1 / x)
@@ -631,7 +561,7 @@ a value of $1.00$. This implies that each mile
 
 <<distances, warning=FALSE>>=
 # calculate centroids of tracts and parks
- 
+
 parks <- parks %>% st_transform(st_crs(pop_weighted_centroids))
 
 # distances from all tracts to all zones
@@ -662,9 +592,9 @@ tracts_sf <- tracts %>% st_as_sf() %>% st_transform(4326)
 pal <- colorQuantile("GnBu", tracts_sf$access_ls, n = 5)
 leaflet(tracts_sf) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  addPolygons(group = "access", color = ~ pal(access_ls), 
-              label = ~as.character(round(access_ls,2))) %>% 
-  addPolygons(group = "tweets", color = ~ pal(tweets_ls), 
+  addPolygons(group = "access", color = ~ pal(access_ls),
+              label = ~as.character(round(access_ls,2))) %>%
+  addPolygons(group = "tweets", color = ~ pal(tweets_ls),
               label = ~as.character(round(tweets_ls,2))) %>%
   addLayersControl(baseGroups = c("access", "tweets"))
 @
@@ -677,7 +607,7 @@ library(ggmap)
 map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
 map +
-  geom_sf(data = tracts_sf, inherit.aes=FALSE, 
+  geom_sf(data = tracts_sf, inherit.aes=FALSE,
           aes(fill = cut(access_ls, breaks = c(-Inf, -3, -2, -1, 0, 2, 3, Inf))),
           alpha = 0.8) +
   scale_fill_brewer("Relative Park Logsum", palette = "GnBu")
@@ -689,10 +619,10 @@ map +
 \section{Results}
 
 <<spatial selection>>=
-physact_base_sem <- errorsarlm(update(base_formula, log_physact ~ .), 
+physact_base_sem <- errorsarlm(update(base_formula, log_physact ~ .),
                              data = tracts@data, listw = W, zero.policy = TRUE)
-physact_base_sdm <- lagsarlm(update(base_formula, log_physact ~ .), 
-                           data = tracts@data, listw = W, zero.policy = TRUE, 
+physact_base_sdm <- lagsarlm(update(base_formula, log_physact ~ .),
+                           data = tracts@data, listw = W, zero.policy = TRUE,
                            type = "mixed")
 test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 @
@@ -706,36 +636,36 @@ pa_tweets_sdm <- update(physact_base_sdm, .~ . + tweets_ls)
 @
 
 We estimated SDM and SEM models regressing the physical activity rate against
-against the base covariates (without the accessibility logsum). A likelihood 
-ratio test rejects that the SEM is equivalent 
-($\chi^2 = \Sexpr{test_sdmsem$Chisq[2]}$ on \Sexpr{test_sdmsem$Df[2]} degrees of 
-freedom), so we use the SDM specification only going forward. Table 
-\ref{tab:pa_models} presents the estimated coefficients for the base model as 
+against the base covariates (without the accessibility logsum). A likelihood
+ratio test rejects that the SEM is equivalent
+($\chi^2 = \Sexpr{test_sdmsem$Chisq[2]}$ on \Sexpr{test_sdmsem$Df[2]} degrees of
+freedom), so we use the SDM specification only going forward. Table
+\ref{tab:pa_models} presents the estimated coefficients for the base model as
 well as models including logsum-based accessibility with and without Twitter
 activity. A few initial observations can be made from this table. First, adding
 the logsum measurement significantly improves the overall model fit, using a
 likelihood ratio test on the model log-likelihood statistics. Second, the
-coefficient estimates on the controlling variables remain virtually unchanged 
-from the base model. 
+coefficient estimates on the controlling variables remain virtually unchanged
+from the base model.
 
 \begin{table*}
   \caption{Estimated Coefficients Relating Park Access to Physical Activity}
   \label{tab:pa_models}
 <<pamodelchart, results="asis">>=
-pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm, 
+pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm,
                        `Access + Tweets` = pa_tweets_sdm)
-texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE, 
+texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE,
        booktabs = TRUE, use.packages = FALSE)
-#' screenreg(pa_models, digits = 4, table = FALSE) 
+#' screenreg(pa_models, digits = 4, table = FALSE)
 @
 \end{table*}
 
 Recall from the presentation of spatial econometrics above that the total effect of a
 covariate on the dependent variable is different from the estimated coefficient
-and involves interaction between direct and indirect effects, or between 
+and involves interaction between direct and indirect effects, or between
 the $\beta$ and $\gamma$ parameters. This is particularly important when the
 $\beta$ and $\gamma$ estimates for a particular covariate show a different
-sign, such as in the proportion of black residents in a census tract, as 
+sign, such as in the proportion of black residents in a census tract, as
 interpreting the direction and magnitude of the relationship is not straightforward.
 
 
@@ -743,14 +673,14 @@ interpreting the direction and magnitude of the relationship is not straightforw
 <<extract_impacts>>=
 #' Get the MC simulated impact coefficients and significance from a model
 #' @param sdm An autoregressive lag (SAR or SDM) model object `lagsarlm`
-#' @return A data frame with the effect (direct, indirect, total), variable, 
+#' @return A data frame with the effect (direct, indirect, total), variable,
 #'   simulated mean impact, and significance p-value
 extract_impacts <- function(sdm) {
-  
+
   impacts_summary <- summary(
-    impacts(sdm, tr=trMC,  R = 1000, useHESS = !is.logical(sdm$fdHess)), 
+    impacts(sdm, tr=trMC,  R = 1000, useHESS = !is.logical(sdm$fdHess)),
     zstats = TRUE)
-  
+
   estimate <- list(
     Direct = impacts_summary$direct_sum,
     Indirect = impacts_summary$indirect_sum,
@@ -763,16 +693,16 @@ extract_impacts <- function(sdm) {
       std.error = s$statistics[,2]
     )
   }) %>%
-    bind_rows(.id = "effect") 
-    
-  
+    bind_rows(.id = "effect")
+
+
   pval <- as_data_frame(impacts_summary$pzmat) %>%
     mutate(
      term = rownames(impacts_summary$pzmat)
     ) %>%
     gather("effect", "p-val", -term)
-  
-  
+
+
   left_join(estimate, pval, by = c("effect", "term"))
 }
 @
@@ -787,23 +717,23 @@ physact_impacts <- pa_models %>%
   rename(submodel = effect)
 
 
-effect_estimate <- physact_impacts %>% 
-  filter(model == "Access + Tweets", term == "tweets_ls", submodel == "Total") %>% 
-  pull(estimate) 
+effect_estimate <- physact_impacts %>%
+  filter(model == "Access + Tweets", term == "tweets_ls", submodel == "Total") %>%
+  pull(estimate)
 
-density_estimate <- physact_impacts %>% 
-  filter(model == "Access + Tweets", term == "log(density)", submodel == "Total") %>% 
-  pull(estimate) 
+density_estimate <- physact_impacts %>%
+  filter(model == "Access + Tweets", term == "log(density)", submodel == "Total") %>%
+  pull(estimate)
 
 physact_impacts %>%
   transmute(
     model, term, submodel, estimate,
-    output = paste(round(`p-val`, 5), 
+    output = paste(round(`p-val`, 5),
                    gtools::stars.pval(`p-val`))
   ) %>%
   filter(term %in% c("access_ls", "tweets_ls")) %>%
   select(-term) %>%
-  kable("latex", booktabs = T, escape = FALSE, 
+  kable("latex", booktabs = T, escape = FALSE,
         col.names = c("Logsum Measure", "Effect", "Estimate", "$p$-value"))
 @
 \end{table*}
@@ -811,24 +741,56 @@ physact_impacts %>%
 Table \ref{tab:pa_impacts} shows the simulated marginal impact of the
 accessibility logsum measurements on the physical activity rate in each tract.
 Given that the logsum is a relatively continuous measure over space, and that it
-would be difficult to improve the park accessibility of a tract without also 
+would be difficult to improve the park accessibility of a tract without also
 improving the accessibility of the tract's neighbors, the total effect combining
-the direct effect and the indirect effects of all neighbors is 
-most appropriate. The total effect of tract-level accessiblity on physical 
+the direct effect and the indirect effects of all neighbors is
+most appropriate. The total effect of tract-level accessiblity on physical
 activity rates is strongly significant, regardless of whether we consider Twitter
-activity. 
+activity.
 
-It is of course necessary to also consider the magnitude of the effect. 
+It is of course necessary to also consider the magnitude of the effect.
 As this is a semi-log model, the coefficient implies a unit increase
-in the access and tweets logsum leads to a 
-\Sexpr{round(effect_estimate * 100, 3)}\% increase in the physical activity rate. 
+in the access and tweets logsum leads to a
+\Sexpr{round(effect_estimate * 100, 3)}\% increase in the physical activity rate.
 Referring to the map of logsum measures in Figure \ref{fig:map}, the measures
 span from roughly $-3$ in heavily industrialized segments of southern Brooklyn
 to roughly $3$ in tracts immediately adjacent to Central Park on the Upper East
 Side. Thus moving from the least accessible parts of the city to the most
-accessible will reduce the expected physical activity rate by 
-\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. For an aggregate statistic, this 
+accessible will reduce the expected physical activity rate by
+\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. For an aggregate statistic, this
 is not an insubstantial marginal effect.
+
+<<obesity_models>>=
+obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ . + log_physact),
+                           data = tracts@data, listw = W, zero.policy = TRUE,
+                           type = "mixed")
+obese_access_sdm <- update(obese_base_sdm, . ~ . + access_ls + access_ls * log_physact)
+obese_tweets_sdm <- update(obese_base_sdm, . ~ . + tweets_ls + access_ls * log_physact)
+obesity_models <- list("Obesity" = obese_base_sdm, "Obesity Access" = obese_access_sdm, 
+                       "Obesity Tweets + Access" = obese_tweets_sdm)
+@
+
+
+
+<<obese_impacts>>=
+obese_impacts <- obesity_models %>%
+  lapply(extract_impacts) %>%
+  bind_rows(.id = "model") %>% ungroup() %>%
+  rename(submodel = effect)
+
+dwplot(bind_rows(physact_impacts, obese_impacts) %>% 
+                 filter(term %in% c("log_physact", "access_ls", "tweets_ls")) %>%
+                 filter(submodel == "Total")) +
+  theme_bw()
+
+obese_impacts %>%
+  transmute(
+    model, term, submodel, estimate,
+    output = paste(round(`p-val`, 5),
+                   gtools::stars.pval(`p-val`))
+  ) %>%
+  filter(term %in% c("log_physact", "access_ls", "tweets_ls"), submodel == "Total")
+@
 
 
 \section{Discussion}
