@@ -62,6 +62,9 @@ library(texreg)
 opts_chunk$set(cache=TRUE, message = FALSE, echo = FALSE)
 library(leaflet)
 
+knit_hooks$set(inline = function(x) {
+  prettyNum(x, big.mark=",", drop0trailing = TRUE)
+})
 @
 
 
@@ -347,6 +350,9 @@ tracts@data <-  tbl_df(tracts@data) %>%
   )
 @
 
+
+
+
 The primary dataset is a geographic polygons shapefile of Census tracts in
 New York City. We appended relevant sociodemographic data for each tract level
 from the American Community Survey 2011-2015 5-year estimates. Data on physical
@@ -355,37 +361,6 @@ the Centers for Disease Control and Prevention’s 500 Cities Project.
 After removing tracts with missing population information or outlying and unusual
 characteristics, we have Sexpr{nrow(tracts)} complete cases. Table
 \ref{tab:tractsdata} presents key descriptive statistics for these data.
-
-\begin{table*}
-  \caption{Summary Statistics of Tract Data}
-  \label{tab:tractsdata}
-<<data_summary, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
-our_summary <- list(
-  "obesity"     = tab_summary(tracts$obesity),
-  "physact"     = tab_summary(tracts$physact),
-  "pop_density" = tab_summary(tracts$density),
-  "fulltime"    = tab_summary(tracts$fulltime),
-  "college"     = tab_summary(tracts$college)
-)
-
-summary_table(tracts@data, our_summary) %>%
-  kable("latex", booktabs = T, escape = FALSE) %>%
-  group_rows("Obese: percent of tract which is obese", 1, 4) %>%
-  group_rows("Physical Activity: percent of tract reporting physical activity", 5, 8) %>%
-  group_rows("Population Density: individuals per square mile", 9, 12)  %>%
-  group_rows("Full Time: percent of adults who work full time", 13, 16) %>%
-  group_rows("College: percent of adults with a college degree", 17, 20)
-@
-\end{table*}
-
-In a destination choice framework, the tracts represent the "origins" and
-"destinations" are parks in New York City.
-We retrieved a shapefile of public parks and greenspaces within New York City’s
-municipal boundaries and checked it for accuracy and relevance. Upon inspection,
-we removed several facilities that do not qualify as publicly accessible green
-space, such as Yankee Stadium and its surrounding parking lots. We also removed
-parks of less than half an acre in size, as these appear to be predominantly
-vacant lots or parking strips rather than legitimate public green space.
 
 <<parks>>=
 parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
@@ -398,21 +373,70 @@ parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
   filter(size > 0.5)
 @
 
+In a destination choice framework, the tracts represent the "origins" and
+"destinations" are parks in New York City.
+We retrieved a shapefile of public parks and greenspaces within New York City’s
+municipal boundaries and checked it for accuracy and relevance. Upon inspection,
+we removed several facilities that do not qualify as publicly accessible green
+space, such as Yankee Stadium and its surrounding parking lots. We also removed
+parks of less than half an acre in size, as these appear to be predominantly
+vacant lots or parking strips rather than legitimate public green space. This 
+leaves us with \Sexpr{nrow(parks)} separate parks. 
+
+<<tractsdata, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
+tracts_data_index <- data_frame(
+  variable =  c(
+    "obesity", "physact", "density", "fulltime", "college", "single", 
+    "Pct0to17", "Pct18to29",  "Pct65plus", "black", "asian", "hispanic", 
+    "other")
+  ) %>% mutate(order = row_number())
 
 
-\begin{table*}
-  \caption{Summary Statistics of Parks Data}
-  \label{tab:parksdata}
-<<parks_summary, results="asis", message=FALSE, warning=FALSE, cache = FALSE>>=
-park_summary <- list(
-  "size"     = tab_summary(parks$size),
-  "tweets"   = tab_summary(parks$tweets)
-)
+tract_summary <- tracts@data %>%
+  dplyr::select(obesity:Pct65plus) %>%
+  gather(variable, value) %>%
+  group_by(variable) %>%
+  summarise(
+    min = min(value),
+    `msd` = paste(median_iqr(value)),
+    max = max(value)
+  ) %>%
+  inner_join(tracts_data_index) %>%
+  arrange(order) %>%
+  mutate(
+    variable = c(
+      "Obesity Rate", "Physical Activity Rate",
+      "Density: population per square mile",
+      "Full-time workers", "College-educated", 
+      "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)", 
+      "Share of seniors (65+)", "Black population share", "Asian population share", 
+      "Hispanic population share", "Other Minorities")
+  ) %>%
+  dplyr::select(-order) 
+  
+park_summary <- parks %>%
+  st_set_geometry(NULL) %>%
+  dplyr::select(size, tweets) %>%
+  gather(variable, value) %>%
+  group_by(variable) %>%
+  summarise(
+    min = min(value),
+    `msd` = paste(median_iqr(value)),
+    max = max(value)
+  ) %>%
+  mutate( variable = c("Park Size in Acres", "Tweets Emanating from Park"))
 
-summary_table(as_data_frame(parks), park_summary) %>%
-  kable("latex", booktabs = T, escape = FALSE, col.names = c("Parks"))
+bind_rows(tract_summary, park_summary) %>%
+  kable(escape = FALSE, digits = 2, 
+        table.envir = "table*", booktabs = TRUE,
+        caption = "Descriptive Statistics of Tract and Park Variables",
+        col.names = c(" ", "Minimum", "Median (IQR)", "Maximum")) %>%
+  kable_styling() %>%
+  group_rows(paste("Tract Variables, N =", nrow(tracts@data)), 1, 13) %>%
+  group_rows(paste("Park Variables, N =", nrow(parks)), 14, 15)
+    
 @
-\end{table*}
+
 
 
 \subsection{Model}\label{subsec:model}
@@ -429,6 +453,11 @@ base_formula <- formula(
     fulltime + college + single +
     Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
     black + asian + hispanic + other)
+
+termnames <- c("log(density)" , "Full-time workers", "College-educated", 
+               "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)", 
+               "Share of seniors (65+)", "Black population share", "Asian population share", 
+               "Hispanic population share", "Other Minorities")
 @
 where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes,
 $CS_i$ is a choice-based
@@ -468,7 +497,7 @@ W_{ij} = \begin{cases}
   \end{cases}
 \end{equation}
 
-<<weights>>=
+<<weights, warning = FALSE>>=
 pop_weighted_centroids <- read_csv("data/CenPop2010_Mean_TR36.csv") %>%
   mutate(geoid = str_c(STATEFP, COUNTYFP, TRACTCE))
 pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "geoid") %>%
@@ -655,7 +684,10 @@ from the base model.
 pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm,
                        `Access + Tweets` = pa_tweets_sdm)
 texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE,
-       booktabs = TRUE, use.packages = FALSE)
+       booktabs = TRUE, use.packages = FALSE, 
+       custom.coef.names = c("Intercept", termnames, paste("lag", termnames), "$\\rho$",
+                             "Access logsum", "lag Access logsum", 
+                             "Access + Tweets logsum", "lag Access + Tweets logsum"))
 #' screenreg(pa_models, digits = 4, table = FALSE)
 @
 \end{table*}
@@ -710,7 +742,7 @@ extract_impacts <- function(sdm) {
 \begin{table*}
   \caption{Simulated Impact of Accessibility on Physical Activity}
   \label{tab:pa_impacts}
-<<impacts>>=
+<<impacts, results="asis">>=
 physact_impacts <- pa_models %>%
   lapply(extract_impacts) %>%
   bind_rows(.id = "model") %>% ungroup() %>%
@@ -731,10 +763,11 @@ physact_impacts %>%
     output = paste(round(`p-val`, 5),
                    gtools::stars.pval(`p-val`))
   ) %>%
-  filter(term %in% c("access_ls", "tweets_ls")) %>%
-  select(-term) %>%
+  filter(term %in% c("access_ls", "tweets_ls"), submodel == "Total") %>%
+  dplyr::select(-term, -submodel) %>%
   kable("latex", booktabs = T, escape = FALSE,
-        col.names = c("Logsum Measure", "Effect", "Estimate", "$p$-value"))
+        col.names = c("Logsum Measure", "Estimate", "$p$-value")) %>%
+  footnote("$^{***}p<0.001$, $^{**}p<0.01$, $^*p<0.05$", escape = F)
 @
 \end{table*}
 
@@ -757,43 +790,54 @@ span from roughly $-3$ in heavily industrialized segments of southern Brooklyn
 to roughly $3$ in tracts immediately adjacent to Central Park on the Upper East
 Side. Thus moving from the least accessible parts of the city to the most
 accessible will reduce the expected physical activity rate by
-\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. For an aggregate statistic, this
-is not an insubstantial marginal effect.
+\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. In other words, if a tract with 
+poor accessibility is expected to achieve the sample mean of 
+\Sexpr{round(mean(tracts$physact), 1)}\%, the same tract with excellent accessibility
+is expected to achieve a rate of 
+\Sexpr{round(mean(tracts$physact) * (1 + effect_estimate  * 6), 2)}\%. 
+For an aggregate statistic strongly influenced by other socioeconomic factors, 
+this is not an insubstantial marginal effect.
 
 <<obesity_models>>=
-obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ . + log_physact),
-                           data = tracts@data, listw = W, zero.policy = TRUE,
-                           type = "mixed")
-obese_access_sdm <- update(obese_base_sdm, . ~ . + access_ls + access_ls * log_physact)
-obese_tweets_sdm <- update(obese_base_sdm, . ~ . + tweets_ls + access_ls * log_physact)
-obesity_models <- list("Obesity" = obese_base_sdm, "Obesity Access" = obese_access_sdm, 
-                       "Obesity Tweets + Access" = obese_tweets_sdm)
+obese_tweets_sdm <- update(pa_tweets_sdm, log_obesity ~ . + log_physact)
 @
 
+We now consider the impacts of a model where the dependent variable is 
+the {\em obesity} rate, and physical activity becomes an independent covariate
+alongside the controlling variables and the tweets-augmented logsum variable. 
+Table \ref{tab:obese_impacts} presents the simulated impacts resulting from
+this model.
 
-
-<<obese_impacts>>=
-obese_impacts <- obesity_models %>%
-  lapply(extract_impacts) %>%
-  bind_rows(.id = "model") %>% ungroup() %>%
-  rename(submodel = effect)
-
-dwplot(bind_rows(physact_impacts, obese_impacts) %>% 
-                 filter(term %in% c("log_physact", "access_ls", "tweets_ls")) %>%
-                 filter(submodel == "Total")) +
-  theme_bw()
-
-obese_impacts %>%
+\begin{table*}
+  \caption{Simulated Impacts of Variables on Obesity}
+  \label{tab:obese_impacts}
+<<tab:obese_impacts, results="asis">>=
+extract_impacts(obese_tweets_sdm) %>%
+  group_by(effect) %>%
   transmute(
-    model, term, submodel, estimate,
-    output = paste(round(`p-val`, 5),
-                   gtools::stars.pval(`p-val`))
+    term,
+    output = paste(round(`estimate`, 5),
+                   gtools::stars.pval(`p-val`)),
+    order = row_number()
   ) %>%
-  filter(term %in% c("log_physact", "access_ls", "tweets_ls"), submodel == "Total")
+  spread(effect, output) %>%
+  arrange(order) %>%
+  dplyr::select(-order) %>%
+  mutate(
+    term = c(termnames, "Access + Tweets logsum", "log(Physical Activity Rate)")
+  ) %>%
+  kable("latex", booktabs = T, escape = FALSE, digits = 3, 
+        col.names = c("", "Direct", "Indirect", "Total")) %>%
+  footnote("$^{***}p<0.001$, $^{**}p<0.01$, $^*p<0.05$", escape = F)
 @
+\end{table*}
 
 
 \section{Discussion}
+
+We readily acknowledge limitations in this study. To begin, it would be beneficial 
+to have estimated the logsum coefficients from a high-quality survey rather than
+asserting them to match {\em a priori expectations of}
 
 
 \begin{funding}
