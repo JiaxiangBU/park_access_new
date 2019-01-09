@@ -26,11 +26,6 @@ Nico cleaned the tracts dataset into a geoJSON file stored in the repository. We
 should read it in twice because the sf library is better for visualization but
 spdep still requires sp objects for now.
 
-```{r read_tracts}
-tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
-tracts_sf <- st_read("data/nyc_tracts.geojson", quiet = TRUE) %>%
-  st_transform(4326)
-```
 
 ## Complete Cases
 We noticed that our models had different numbers of observations / degrees of 
@@ -38,16 +33,47 @@ freedom. Obviously we need to have comparable econometric models. The first thin
 we want to look for is missingness in the tracts variables, and which tracts
 are missing those variables. The map below shows the tracts that are missing
 this information.
+```{r read_tracts}
+tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
+tracts_sf <- st_read("data/nyc_tracts.geojson")
 
-```{r tracts_with_missing}
 # identify complete cases
-complete_tracts_index <- tracts_sf %>%
-  st_set_geometry(NULL) %>%
+complete_tracts_index <- tracts@data %>%
   tbl_df() %>%
   complete.cases()
+tracts <- tracts[complete_tracts_index, ]
 
+
+tracts@data <-  tbl_df(tracts@data) %>%
+  dplyr::transmute(
+    geoid = GEOID,
+    county_fips = substr(GEOID, 3, 5),
+    borough = case_when(
+      county_fips == "081" ~ "Queens",
+      county_fips == "047" ~ "Brooklyn",
+      county_fips == "061" ~ "Manhattan",
+      county_fips == "005" ~ "Bronx",
+      county_fips == "085" ~ "Staten Island",
+      TRUE ~ as.character(NA)
+    ),
+    obesity = OBESITY,
+    physact = 100 - Phys_Act,
+    log_obesity = log(OBESITY),
+    log_physact = log(100 - Phys_Act),
+    density = Pop_Density,
+    fulltime = FulltimeWork, college = CollegeDeg,
+    single = Single_Percent,
+    black = PctBlack, asian = PctAsian, hispanic = PctHispanic,
+    other = PctNative + PctPacific,
+    Pct0to17, Pct18to29, Pct65plus,
+    income = NYC_Income
+  )
+```
+
+
+```{r tracts_with_missing}
 # make a map of 
-leaflet( tracts_sf[!complete_tracts_index, ]) %>%
+leaflet( tracts_sf[!complete_tracts_index, ] %>% st_transform(4326)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik) %>% 
   addPolygons(label = ~ as.character(GEOID))
 ```
@@ -67,18 +93,33 @@ The exceptions to this appear to be 3606100940 and 36061010200 in Midtown betwee
 entirely commercial tracts and therefore have no residents, but Nico needs to 
 verify these.
 
-```{r complete_cases}
-tracts <- tracts[complete_tracts_index, ]
-```
-
-
 
 The parks data seems relatively complete, with the exception of a few variables
-that are missing everywhere. But we'll ignore this for now.
+that are missing everywhere. Also it seems that we are including parking strips 
+very small pieces of property, even though these facilities are unlikely to 
+generate physical activity - related trips. Finally, sports fields within larger
+parks probably do not need to be double-counted.
 
 ```{r read_parks, echo=FALSE}
-parks <- sf::st_read("data/nyc_parks.geojson")
+allparks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
+  transmute(
+    size = Park_Acres,
+    log_size = log(Park_Acres),
+    tweets = TWEET_COUNT,
+    log_tweets = yeo.johnson(TWEET_COUNT, 0)
+  )
+
+parks <- allparks %>%
+  filter(size > 0.5)
 ```
+
+The map below shows the parks we are including.
+```{r parksmap}
+leaflet( allparks %>% filter(size > 0.5) %>% st_transform(4326)) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik) %>% 
+  addPolygons()
+```
+
 
 ## Tweets Transformation
 
@@ -90,45 +131,17 @@ with a lambda value of zero transforms the tweet count into a distribution
 asymptotically equivalent to log, and with zero values equal to zero.
 
 ```{r tweettransformation}
-parks %>%
-  tbl_df() %>%
-  dplyr::select(raw = TWEET_COUNT) %>%
-  filter(raw < 100) %>%
-  mutate(
-    `0.5` = yeo.johnson(raw, 0.5),
-    `0` = yeo.johnson(raw, 0),
-    log = log(raw)
-  ) %>%
-  gather(lambda, x, -raw) %>%
-  ggplot(aes(x = raw, y = x, color = lambda)) + 
-  geom_line()
-
-
-parks <- parks %>%
-  mutate(
-    log_size = log(Park_Acres),
-    log_tweets = yeo.johnson(TWEET_COUNT, 0)
-  )
+data_frame(x = seq(0, 50, by = 0.5)) %>% 
+  mutate(log = log(x), `yeo-johnson` = yeo.johnson(x, 0)) %>%
+  gather(transform, y, -x) %>%
+  ggplot(aes(x = x, y = y, color= transform)) + geom_line()
   
 ```
 
 ## Other variables
 
 ```{r show_data, echo=FALSE}
-tracts@data <- tbl_df(tracts@data) %>%
-  dplyr::select(
-    GEOID, OBESITY, Park_Percent, Phys_Act, MENTAL, 
-    Income1, Income2, Income3, Income4, Income5, Income6, 
-    Income7, Income8, Income9, Income10, Pop_Density, 
-    FulltimeWork, CollegeDeg, Pct0to17, Pct18to29, Pct30to64, Pct65plus, 
-    Single_Percent, PctWhite, PctBlack, PctNative, PctAsian, PctPacific,
-    PctOther, PctHispanic
-  )  %>%
-  mutate(
-    log_obesity = log(OBESITY),
-    log_physact = log(100 - Phys_Act)
-  )
-
+tracts@data
 ```
 
 # Spatial Model Selection
@@ -157,11 +170,11 @@ work status and educational attainment, minority and young/elderly population,
 and marital status.
 
 ```{r obese_lm, echo=FALSE, message=FALSE, include=FALSE}
-base_formula <- formula( 
-  ~ log(Pop_Density) + 
-    FulltimeWork + CollegeDeg + Single_Percent + 
-    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity  
-    PctBlack + PctAsian + PctOther + PctHispanic)
+base_formula <- formula(
+  ~ log(density) + log(income) +
+    fulltime + college + single +
+    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
+    black + asian + hispanic + other)
 ```
 
 We estimate four models with this regression specification:
@@ -173,97 +186,55 @@ We estimate four models with this regression specification:
   
   
 ```{r spatial selection}
-obese_base_lm <- lm(update(base_formula, log_obesity ~ .), data = tracts@data)
-obese_base_sar <- lagsarlm(update(base_formula, log_obesity ~ .), 
+physact_base_lm <- lm(update(base_formula, physact ~ .), data = tracts)
+physact_base_sar <- lagsarlm(update(base_formula, physact ~ .),
                            data = tracts@data, listw = W, zero.policy = TRUE)
-obese_base_sem <- errorsarlm(update(base_formula, log_obesity ~ .), 
+physact_base_sem <- errorsarlm(update(base_formula, physact ~ .),
                              data = tracts@data, listw = W, zero.policy = TRUE)
-obese_base_sdm <- lagsarlm(update(base_formula, log_obesity ~ .), 
-                           data = tracts@data, listw = W, zero.policy = TRUE, 
+physact_base_sdm <- lagsarlm(update(base_formula, physact ~ .),
+                           data = tracts@data, listw = W, zero.policy = TRUE,
                            type = "mixed")
+test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 ```
 
 
-A likelihood ratio test reveals that the SEM is not preferred, so we use the SDM
+A likelihood ratio test reveals that the SEM actually preferred, so we use this
 only going forward.
 
-```{r lrtest}
-lmtest::lrtest(obese_base_sem, obese_base_sdm)
+```{r }
+physact_models <- list("OLS" = physact_base_lm, "SAR" = physact_base_sar, 
+                       "SEM" = physact_base_sem, "SDM" = physact_base_sdm)
+screenreg(physact_models, digits = 5)
+
 ```
 
 The residuals appear homoskedastic with few outliers.
 
 ```{r residuals}
-tracts_sf <- tracts_sf[complete_tracts_index, ] %>%
+tracts_sf <- tracts_sf %>%
   mutate(
-    log_obesity = tracts$log_obesity,  
-    obese_base_lm_residuals = obese_base_lm$residuals,
-    obese_base_sdm_fitted = obese_base_sdm$fitted.values,  
-    obese_base_sdm_residuals = obese_base_sdm$residual
+    log_obesity = tracts$log_physact,  
+    physact_base_lm_residuals = physact_base_lm$residuals,
+    physact_base_sem_fitted = physact_base_sem$fitted.values,  
+    physact_base_sem_residuals = physact_base_sem$residual
   ) 
 
-ggplot(tracts_sf, aes(x = log_obesity, y = obese_base_sdm_fitted)) + 
+ggplot(tracts_sf, aes(x = log_obesity, y = physact_base_sem_fitted)) + 
   geom_point()
 ```
 
 The residuals also appear to be distributed wtihout serious spatial correlation
 ```{r residuals_map}
-pal <- colorQuantile("BrBG", tracts_sf$obese_base_sdm_residuals, n = 9)
-leaflet(tracts_sf) %>%
+pal <- colorQuantile("BrBG", tracts_sf$physact_base_sem_residuals, n = 9)
+leaflet(tracts_sf %>% st_transform(4326)) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  addPolygons(color = ~pal(obese_base_sdm_residuals), stroke = NA, opacity = 0.8)
+  addPolygons(color = ~pal(physact_base_sem_residuals), stroke = NA, opacity = 0.8)
 ```
 
 
 
 # Logsum Calculation
 
-
-
-Consider that an individual is choosing a park for a recreation activity.
-According to basic choice theory (Mcfadden 1974), the probability of choosing
-park $p$ from the set of all regional parks $J$ is:
-
-$$ P(p | V_p) = \frac{\exp(V_p)}{\sum_{j \in J}\exp(V_j)}$$
-where parks are differentiated from each other by their relative measurable
-utilitie $V$. In principle, $V$ may include any measurable attributes of either
-the choice maker or the park. In this study we use a linear formulation of
-
-$$V_{ij} = size_j\beta_s + distance_{ij}\beta_d$$
-incorporating the size of the park in acres and the distance of the park from
-the census tract $i$ in miles. The coefficients $\beta$ are typically estimated from 
-surveys, though in the absence of a survey we apply a maximum likelihood
-technique described below.
-
-A key theoretical understanding of random utility choice models is that the
-consumer surplus of the choice set can be otained as the log-sum of the
-denominator of the choice probability equation. In plainer terms, the *total value*
-of an individual's park accessibility is defined to be:
-
-$$CS_i = \ln\left({\sum_{j \in J}\exp(V_{ij})}\right)$$
-
-There are several advantages to a log-sum defined metric relative to
-buffer-based accessibility metrics more commonly found in the literature. First,
-all individuals are defined as having some access to all parks, rather than an
-arbitrary limit of 1/2 mile or so. This allows for the fact that some people are
-more or less sensitive to distances, and that distance is a continuous, and not
-a binary, phenomenon. Second, the random utility formulation allows the
-researcher to include any attribute of the park; in this case, we consider the
-size of the park as an element of accessibility. This suggests that not all
-parks are equal, and that a large park such as New York City's Central Park may
-provide health and activity benefits over a much larger area than a smaller
-community square.
-
-McFadden, D. (1974). The measurement of urban travel demand. Journal of public economics, 3(4), 303-328.
-
-In the absence of a park choice survey, we estimated likely values of the $\beta$ 
-coefficients by iteratively searching for the values which produced the highest
-model likelihood in *which model did we use to estimate likelihood?*. The search
-was constrained by two assertions. First, we required that the coefficient on
-size be positive and that on distance negative; all else equal, people will
-prefer to use larger parks that are nearer to their residence. Second, we visually
-inspected the resulting accessibility scores to ensure that the scores produced a 
-reasonably varied pattern of access throughout the metropolitan region.
 
 $$ A_i = log\sum_{j \in J}\exp(distance_{ij} \beta_d + size_j \beta_j + tweets_j \beta_t)$$
 We wrote a function to calculate this value for an arbitrary distance matrix, size
@@ -312,15 +283,73 @@ calculate_park_logsums <- function(d, sizes, tweets = NULL,
 First, we calculate the distance between the tracts and the parks.
 ```{r distancematrix}
 # calculate centroids of tracts and parks
-tract_centroids <- tracts %>% st_as_sf() %>% st_centroid() 
-park_centroids <- parks %>% st_centroid() %>% st_transform(st_crs(tract_centroids))
+parks <- parks %>% st_transform(st_crs(pop_weighted_centroids))
 
 # distances from all tracts to all zones
-distances <- st_distance(tract_centroids, park_centroids, byid = TRUE) %>%
+distances <- st_distance(pop_weighted_centroids, parks, byid = TRUE) %>%
   units::set_units(miles) %>%
   units::drop_units()
+
+# assert that a tract must be at least 1/10 mile from a park
+distances <- pmax(distances, 0.1)
 ```
 
+
+We now need to run a subroutine to determine the values of the beta coefficients
+which produce the highest model likelihood, and .
+
+
+```{r notweets_logsum, eval = FALSE}
+notweets_logsum <- function(betas, distances, parks, tracts, model) {
+  
+  logsum <- calculate_park_logsums(
+    d = distances,  sizes = parks$log_size,
+    betas = betas)
+  
+  tracts@data$access_ls <- (logsum - mean(logsum)) / sd(logsum)
+  
+  sdm <- update(model, . ~ . + access_ls)
+  return(-logLik(sdm))
+}
+
+access_sdm_val <- optim(
+  fn = notweets_logsum,  
+  par = c(-0.42, 0.5), # distance, size 
+  lower = c(-10, 0), # size coefficient must be positive 
+  upper = c(0, 10), # distance coefficient must be negative 
+  distances = log(distances), parks = parks, tracts = tracts, 
+  model = physact_base_sem,
+  method = "L-BFGS-B", 
+  control = list(trace = 6))
+```
+
+
+
+
+```{r tweets_logsum, eval = FALSE}
+tweets_logsum <- function(betas, distances, parks, tracts, model) {
+  
+  logsum <- calculate_park_logsums(
+    d = distances,  sizes = parks$log_size, tweets = parks$log_tweets,
+    betas = betas)
+  
+  tracts@data$tweets_ls <- (logsum - mean(logsum)) / sd(logsum)
+  
+  sdm <- update(model, . ~ . + tweets_ls)
+  return(-logLik(sdm))
+}
+
+tweets_sdm_val <- optim(
+  fn = tweets_logsum,  
+  par = c(-0.42, 0.5, 1), # distance, size 
+  lower = c(-10, 0, -10), # size coefficient must be positive 
+  upper = c(0, 10, 10), # distance coefficient must be negative 
+  distances = log(distances), parks = parks, tracts = tracts, 
+  model = physact_base_sem,
+  method = "L-BFGS-B", 
+  control = list(trace = 6))
+
+```
 
 
 
@@ -328,9 +357,11 @@ distances <- st_distance(tract_centroids, park_centroids, byid = TRUE) %>%
 tracts@data <- tracts@data %>%
   mutate(
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = c(-0.8, 0.8)),
+                                       betas = c(-1.796, 1.0)),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = c(-0.8, 0.8, 0.2))
+                                       betas = c(-1.796, 1.0, 0.1)),
+    access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
+    tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
   )
 
 tracts_sf <- tracts_sf %>%
@@ -341,7 +372,7 @@ tracts_sf <- tracts_sf %>%
 
 pal <- colorQuantile("Spectral", c(tracts_sf$access_ls, tracts_sf$tweets_ls), 5)
 
-leaflet(tracts_sf) %>%
+leaflet(tracts_sf %>% st_transform(4326)) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(group = "access", color = ~pal(access_ls)) %>%
   addPolygons(group = "access + tweets", color = ~pal(tweets_ls)) %>%
@@ -350,16 +381,16 @@ leaflet(tracts_sf) %>%
 ```
 
 ```{r obesity_access_models}
-access_sdm <- update(obese_base_sdm, .~ . + access_ls)
-tweets_sdm <- update(obese_base_sdm, .~ . + tweets_ls)
+access_sem <- update(physact_base_sem, .~ . + access_ls)
+tweets_sem <- update(physact_base_sem, .~ . + tweets_ls)
 ```
 
 
 
 ```{r modelchart}
-obesity_models <- list(Base = obese_base_sdm, `Access` = access_sdm, 
-                       `Access + Tweets` = tweets_sdm)
-screenreg(obesity_models, digits = 4)
+physact_models <-  
+screenreg()
+
 ```
 
 

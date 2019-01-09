@@ -345,8 +345,9 @@ tracts@data <-  tbl_df(tracts@data) %>%
     black = PctBlack, asian = PctAsian, hispanic = PctHispanic,
     other = PctNative + PctPacific,
     Pct0to17, Pct18to29, Pct65plus,
-    Income1, Income2, Income3, Income4, Income5, Income6,
-    Income7, Income8, Income9, Income10
+    income = NYC_Income,
+    lowincome = Income1 + Income2 + Income3,
+    highincome = Income8 + Income9 + Income10
   )
 @
 
@@ -386,14 +387,15 @@ leaves us with \Sexpr{nrow(parks)} separate parks.
 <<tractsdata, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
 tracts_data_index <- data_frame(
   variable =  c(
-    "obesity", "physact", "density", "fulltime", "college", "single", 
+    "obesity", "physact", "income", "lowincome", "highincome",  
+    "density", "fulltime", "college", "single", 
     "Pct0to17", "Pct18to29",  "Pct65plus", "black", "asian", "hispanic", 
     "other")
   ) %>% mutate(order = row_number())
 
 
 tract_summary <- tracts@data %>%
-  dplyr::select(obesity:Pct65plus) %>%
+  dplyr::select(obesity:highincome) %>%
   gather(variable, value) %>%
   group_by(variable) %>%
   summarise(
@@ -406,6 +408,9 @@ tract_summary <- tracts@data %>%
   mutate(
     variable = c(
       "Obesity Rate", "Physical Activity Rate",
+      "Median tract income",
+      "Share of low income",
+      "Share of high income",
       "Density: population per square mile",
       "Full-time workers", "College-educated", 
       "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)", 
@@ -450,12 +455,14 @@ accessibility to parks with a semi-log specification:
 <<base_formula>>=
 base_formula <- formula(
   ~ log(density) +
+    lowincome + 
     fulltime + college + single +
     Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
     black + asian + hispanic + other)
 
-termnames <- c("log(density)" , "Full-time workers", "College-educated", 
-               "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)", 
+termnames <- c("log(density)" , "log(Income)", 
+               "Full-time workers", "College-educated",  "Single Adults", 
+               "Share of children (0-17)", "Share of young adults (18-29)", 
                "Share of seniors (65+)", "Black population share", "Asian population share", 
                "Hispanic population share", "Other Minorities")
 @
@@ -590,7 +597,6 @@ a value of $1.00$. This implies that each mile
 
 <<distances, warning=FALSE>>=
 # calculate centroids of tracts and parks
-
 parks <- parks %>% st_transform(st_crs(pop_weighted_centroids))
 
 # distances from all tracts to all zones
@@ -606,9 +612,9 @@ distances <- pmax(distances, 0.1)
 tracts@data <- tracts@data %>%
   mutate(
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = c(-0.42, 1.0)),
+                                       betas = c(-1.79, 0)),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = c(-0.42, 1.0, 0.1)),
+                                       betas = c(-0.79, 0, 0.1)),
     access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
     tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
   )
@@ -648,9 +654,9 @@ map +
 \section{Results}
 
 <<spatial selection>>=
-physact_base_sem <- errorsarlm(update(base_formula, log_physact ~ .),
+physact_base_sem <- errorsarlm(update(base_formula, physact ~ .),
                              data = tracts@data, listw = W, zero.policy = TRUE)
-physact_base_sdm <- lagsarlm(update(base_formula, log_physact ~ .),
+physact_base_sdm <- lagsarlm(update(base_formula, physact ~ .),
                            data = tracts@data, listw = W, zero.policy = TRUE,
                            type = "mixed")
 test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
@@ -685,9 +691,9 @@ pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm,
                        `Access + Tweets` = pa_tweets_sdm)
 texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE,
        booktabs = TRUE, use.packages = FALSE, 
-       custom.coef.names = c("Intercept", termnames, paste("lag", termnames), "$\\rho$",
-                             "Access logsum", "lag Access logsum", 
-                             "Access + Tweets logsum", "lag Access + Tweets logsum"))
+       custom.coef.names = c("Intercept", termnames, "$\\lambda$",
+                             "Access logsum", 
+                             "Access + Tweets logsum"))
 #' screenreg(pa_models, digits = 4, table = FALSE)
 @
 \end{table*}
@@ -799,8 +805,10 @@ For an aggregate statistic strongly influenced by other socioeconomic factors,
 this is not an insubstantial marginal effect.
 
 <<obesity_models>>=
-obese_tweets_sdm <- update(pa_tweets_sdm, log_obesity ~ . + log_physact)
+obese_access_sdm <- update(pa_access_sdm, obesity ~ .)
+obese_physact_sdm <- update(obese_access_sdm, . ~ . + physact)
 @
+
 
 We now consider the impacts of a model where the dependent variable is 
 the {\em obesity} rate, and physical activity becomes an independent covariate
@@ -812,11 +820,12 @@ this model.
   \caption{Simulated Impacts of Variables on Obesity}
   \label{tab:obese_impacts}
 <<tab:obese_impacts, results="asis">>=
-extract_impacts(obese_tweets_sdm) %>%
+extract_impacts(obese_physact_sdm) %>%
   group_by(effect) %>%
   transmute(
     term,
     output = paste(round(`estimate`, 5),
+                   "(",round(`std.error`, 5),")",
                    gtools::stars.pval(`p-val`)),
     order = row_number()
   ) %>%
