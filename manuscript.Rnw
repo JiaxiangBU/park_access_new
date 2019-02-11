@@ -124,7 +124,7 @@ citizens to use them.
 
 \section{Literature Review}\label{sec:litreview}
 
-Numerous previous studies have found relationships between aspects of the built
+Numerous previous studies have found relationships between characteristics of the built
 environment and aspects of physical, mental, social, and economic health. Many
 of these findings are summarized in Table \ref{tab:parkbenefits}.
 For the purposes of this study, it is clear that parks and other
@@ -192,18 +192,18 @@ positive association between the two, six studies produced mixed results, and
 nine studies found no association at all.
 
 
-While several of the aforementioned studies yielded results consistent with the
+While several of the aforementioned studies reported results consistent with the
 hypothesis that park access and use confer health benefits stemming from
 increased physical activity and attendant decreases in obesity, all of the
 studies -- except some included in the meta-analysis by \citet{Bancroft2015} -–
 were conducted at the level of the city or metropolitan statistical area.
 Metropolitan-level analyses do not capture the within-city variation in
-accessibility to parks that exists. Some cities with large amounts of total
-greenspace may nevertheless inequally distribute this space throughout the city
+accessibility to parks that exist in many cities. Some cities with large amounts of total
+greenspace may nevertheless inequally distribute this space throughout the city,
 leading to areas with poor access. Conversely, a city with a smaller overall
-proportion of greenspace may give all of its citizens better access to significant
-greenspace. Considering access at the neighborhood level within a single city
-may eliminate some regional or cultural fixed effects affecting
+proportion of greenspace may give all of its citizens better access to sufficient
+greenspace to meet their needs or wants for physical activity. Considering access at the neighborhood level within a single city
+may also eliminate some regional or cultural fixed effects affecting
 metropolitan-level analyses.
 
 In a study of neighborhoods in New York City, \citet{Stark2014} found that a
@@ -245,6 +245,7 @@ approaches "often simplify their measure of proximity by using large areal
 units and by imposing arbitrary distance thresholds," which often results in
 access-poor populations being overlooked.
 
+
 \subsection{Choice-based Accessibility}
 
 Consider that an individual is choosing a park for a recreation activity.
@@ -266,7 +267,7 @@ estimated from household surveys, though in the absence of a survey we
 may assert reasonable values.
 
 A key theoretical outcome of random utility choice models is that the
-consumer surplus, or the total value of all alternatives of the choice set, can
+consumer surplus, or the total weighted value of all alternatives of the choice set, can
 be obtained as the log-sum of the denominator of the choice probability equation
 \citep{Small1981}:
 \begin{equation}\label{eq:cs}
@@ -277,7 +278,7 @@ buffer-based accessibility metrics more commonly found in the literature. First,
 all individuals are defined as having some access to all parks, rather than an
 arbitrary cutoff asserted by the researcher. This allows for the fact that some
 people are more or less sensitive to distances, and that distance is a
-continuous, and not a binary, phenomenon. Second, the random utility formulation
+continuous, non-binary phenomenon. Second, the random utility formulation
 allows the researcher to include any attribute of the park; in this case, we
 consider the size of the park as an element of accessibility. This suggests that
 not all parks are equal, and that a large park such as Central Park on Manhattan
@@ -299,15 +300,16 @@ In spite of its advantages, logsum-based accessibilities have not received
 as much application in the accessibility literature as distance-based or even
 gravity-based measures. They are commonly used, however, in alternatives analyses of
 transit infrastructure improvements \citep{DeJong2007}. A reason for this is
-likely that such analyses are usually conducted in the context of a travel
+likely that such alternatives analyses are usually conducted in the context of a travel
 demand model, where calibrated and multimodal logsums are readily available
 \citep{Geurs2010}.
 
-\section{Empirical Methodology}
+\section{Empirical Application}
 In this section we describe an experiment with data for New York City, where
-we compute a holistic logsum-based accessibility component and model the
+we compute a holistic logsum-based accessibility to parks metric and model the
 relationship between this measure and physical activity rates, controlling for
-spatial effects and socioeconomic factors.
+spatial effects and socioeconomic factors. We subsequently model the effect
+of this accessibility on obesity.
 
 \subsection{Data}
 This study uses data available to the public from a variety of agencies and
@@ -351,14 +353,11 @@ tracts@data <-  tbl_df(tracts@data) %>%
   )
 @
 
-
-
-
 The primary dataset is a geographic polygons shapefile of Census tracts in
 New York City. We appended relevant sociodemographic data for each tract level
 from the American Community Survey 2011-2015 5-year estimates. Data on physical
 activity participation rate and obesity rates for each tract are available from
-the Centers for Disease Control and Prevention’s 500 Cities Project.
+the Centers for Disease Control and Prevention’s 500 Cities Project (WE NEED A CITATION).
 After removing tracts with missing population information or outlying and unusual
 characteristics, we have Sexpr{nrow(tracts)} complete cases. Table
 \ref{tab:tractsdata} presents key descriptive statistics for these data.
@@ -377,19 +376,24 @@ parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
 In a destination choice framework, the tracts represent the "origins" and
 "destinations" are parks in New York City.
 We retrieved a shapefile of public parks and greenspaces within New York City’s
-municipal boundaries and checked it for accuracy and relevance. Upon inspection,
+municipal boundaries and checked it for accuracy and relevance (WE NEED A CITATION).
+Upon inspection,
 we removed several facilities that do not qualify as publicly accessible green
 space, such as Yankee Stadium and its surrounding parking lots. We also removed
 parks of less than half an acre in size, as these appear to be predominantly
-vacant lots or parking strips rather than legitimate public green space. This 
-leaves us with \Sexpr{nrow(parks)} separate parks. 
+vacant lots or parking strips rather than legitimate public green space. This
+leaves us with \Sexpr{nrow(parks)} parks. It is worth noting that the particular
+dataset classifies specific facilities within larger parks as independent
+features: baseball fields within Central Park, for example, are themselves
+unique greenspace. We elect to retain these independent features as they may
+generate additional activity.
 
 <<tractsdata, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
 tracts_data_index <- data_frame(
   variable =  c(
-    "obesity", "physact", "income", "lowincome", "highincome",  
-    "density", "fulltime", "college", "single", 
-    "Pct0to17", "Pct18to29",  "Pct65plus", "black", "asian", "hispanic", 
+    "obesity", "physact", "income", "lowincome", "highincome",
+    "density", "fulltime", "college", "single",
+    "Pct0to17", "Pct18to29",  "Pct65plus", "black", "asian", "hispanic",
     "other")
   ) %>% mutate(order = row_number())
 
@@ -412,13 +416,13 @@ tract_summary <- tracts@data %>%
       "Share of low income",
       "Share of high income",
       "Density: population per square mile",
-      "Full-time workers", "College-educated", 
-      "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)", 
-      "Share of seniors (65+)", "Black population share", "Asian population share", 
+      "Full-time workers", "College-educated",
+      "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)",
+      "Share of seniors (65+)", "Black population share", "Asian population share",
       "Hispanic population share", "Other Minorities")
   ) %>%
-  dplyr::select(-order) 
-  
+  dplyr::select(-order)
+
 park_summary <- parks %>%
   st_set_geometry(NULL) %>%
   dplyr::select(size, tweets) %>%
@@ -432,14 +436,14 @@ park_summary <- parks %>%
   mutate( variable = c("Park Size in Acres", "Tweets Emanating from Park"))
 
 bind_rows(tract_summary, park_summary) %>%
-  kable(escape = FALSE, digits = 2, 
+  kable(escape = FALSE, digits = 2,
         table.envir = "table*", booktabs = TRUE,
         caption = "Descriptive Statistics of Tract and Park Variables",
         col.names = c(" ", "Minimum", "Median (IQR)", "Maximum")) %>%
   kable_styling() %>%
-  group_rows(paste("Tract Variables, N =", nrow(tracts@data)), 1, 13) %>%
-  group_rows(paste("Park Variables, N =", nrow(parks)), 14, 15)
-    
+  group_rows(paste("Tract Variables, N =", nrow(tracts@data)), 1, 16) %>%
+  group_rows(paste("Park Variables, N =", nrow(parks)), 17, 18)
+
 @
 
 
@@ -448,24 +452,10 @@ bind_rows(tract_summary, park_summary) %>%
 
 We predict the rate of physical activity ($y$) in a census tract as a
 function of the tract's sociodemographic characteristics and choice-based
-accessibility to parks with a semi-log specification:
+accessibility to parks with the following  specification:
 \begin{equation}\label{eq:themodel}
-\log(y_i) = f(\vect{x}_i, CS_i, g(W, \mathit{Obesity}, \vect{X}))
+ y_i = f(\vect{x}_i, CS_i, g(W, \vect{y} \vect{X}))
 \end{equation}
-<<base_formula>>=
-base_formula <- formula(
-  ~ log(density) +
-    lowincome + 
-    fulltime + college + single +
-    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
-    black + asian + hispanic + other)
-
-termnames <- c("log(density)" , "log(Income)", 
-               "Full-time workers", "College-educated",  "Single Adults", 
-               "Share of children (0-17)", "Share of young adults (18-29)", 
-               "Share of seniors (65+)", "Black population share", "Asian population share", 
-               "Hispanic population share", "Other Minorities")
-@
 where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes,
 $CS_i$ is a choice-based
 accessibility measure for the tract computed from Equation \ref{eq:cs} and
@@ -490,7 +480,20 @@ relationship between observations $i$ and $j$ in the dataset,
 $\vect{\beta}$ is a vector of estimable coefficients relating the attributes $X$
 of an observation to its outcome, and $\vect{\gamma}$ is a vector of
 estimated coefficients relating the attributes of an observation's {\em neighbors}
-to its outcome.
+to its outcome. If only correlation and not dependence exists in the data
+generating process, it may  be more efficient to estimate a restricted
+spatial autoregressive model and therefore
+save degrees of freedom in the estimation. \citet{tra_autoregression_paper}
+illustrate a decision algorithm originally proposed by \citet{Florax2003} which uses
+a likelihood ratio test of the SDM against the restricted spatial error model (SEM):
+\begin{align}
+{\boldsymbol y} &= X{\boldsymbol \beta} + {\boldsymbol u},  {\boldsymbol u} = \lambda W {\boldsymbol u} +
+{\boldsymbol \epsilon} \label{eq:SEM}\\
+{\boldsymbol y} &= X{\boldsymbol \beta} + (I-\lambda W)^{-1}{\boldsymbol \epsilon}\notag
+\end{align}
+If the likelihood ratio test rejects that the models are equivalent, then the SDM
+should be used because its estimates are unbiased. If the test cannot reject
+equivalents, the SEM is more efficient.
 
 The researcher must assert $W$ {\em a priori}, though there are several
 common specifications \citep{Dubin1998}. In this study we specify that tracts
@@ -521,23 +524,6 @@ W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv,
 trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
 @
 
-It may  be more efficient to estimate a restricted spatial autoregressive
-model -- that controls for only correlation or only dependence -- and therefore
-save degrees of freedom in the estimation.  \citet{tra_autoregression_paper}
-illustrate a decision algorithm originally proposed by \citet{Florax2003} which uses
-a likelihood ratio test of the SDM against a restricted spatial error model (SEM):
-if the likelihood ratio test rejects that the models are equivalent, then the SDM
-should be used.
-
-A final point to note about spatial autoregressive models is that the partial
-derivative of the model with respect to a single regressor $\vect{x_k} \in X$
-does not equal the estimated coefficient $\beta_k$. Consequently, the estimated
-coefficients do not represent the {\em effect} of a variable on the outcome. The
-direct effects of an observation's attribute on its outcome, the indirect effects
-of neighbors' attributes on an outcome, and the total effect of own and neighbors'
-attributes can attained via Monte Carlo simulation. In this study we use the
-\texttt{spdep} package for R \citep{Bivand2013} for model estimation and impact
-simulation.
 
 \subsection{Accessibility}\label{subsec:accessibility}
 
@@ -588,12 +574,17 @@ calculate_park_logsums <- function(d, sizes, tweets = NULL,
 
 We initially estimated potential values of the $\beta$ coefficients by
 applying a limited-memory, box-constrained optimization algorithm maximizing the
-SDM model log-likehood. The constraint required that the coefficient on
+SDM model log-likehood \cite. The constraint required that the coefficient on
 size be positive and that on distance negative; all else equal, we assert people
 will prefer to use larger parks and parks that are nearer to their residence. This
-resulted in $\beta_d = -0.42$  and $\beta_s = 0.000$. Given our expectation that
-park size is a valuable attribute, we subsequently adjusted this value to
-a value of $1.00$. This implies that each mile
+resulted in $\beta_d = -1.98$  and $\beta_s = 0.000$. Though the "most likely"
+parameter value, in this case it was unsatisfactory for two reasons: first,
+our prior assertion that park size is a valuable attribute of a park, and second
+the observation that in this specification tracts bordering on the corners of
+Central Park were measured with poor overall accessibility. we subsequently adjusted the $\beta_s$ value
+so that the
+
+to a value of $1.00$
 
 <<distances, warning=FALSE>>=
 # calculate centroids of tracts and parks
@@ -612,9 +603,9 @@ distances <- pmax(distances, 0.1)
 tracts@data <- tracts@data %>%
   mutate(
     access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = c(-1.79, 0)),
+                                       betas = c(-1.98, 0.3)),
     tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = c(-0.79, 0, 0.1)),
+                                       betas = c(-1.98, 0.3, 0.1)),
     access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
     tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
   )
@@ -644,38 +635,66 @@ map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "t
 map +
   geom_sf(data = tracts_sf, inherit.aes=FALSE,
           aes(fill = cut(access_ls, breaks = c(-Inf, -3, -2, -1, 0, 2, 3, Inf))),
-          alpha = 0.8) +
+          alpha = 0.8, color = NA) +
   scale_fill_brewer("Relative Park Logsum", palette = "GnBu")
 @
   \caption{Relative surplus-based accessibility in New York City}
   \label{fig:map}
 \end{figure*}
 
-\section{Results}
+\subsection{Results}
 
-<<spatial selection>>=
-physact_base_sem <- errorsarlm(update(base_formula, physact ~ .),
-                             data = tracts@data, listw = W, zero.policy = TRUE)
-physact_base_sdm <- lagsarlm(update(base_formula, physact ~ .),
-                           data = tracts@data, listw = W, zero.policy = TRUE,
-                           type = "mixed")
-test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
+<<base_formula>>=
+base_formula <- formula(
+  ~ log(density) +
+    fulltime + college + single +
+    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
+    black + asian + hispanic + other)
+
+
 @
 
 
-
-<<access_sdm>>=
-# estimate models
-pa_access_sdm <- update(physact_base_sdm, .~ . + access_ls)
-pa_tweets_sdm <- update(physact_base_sdm, .~ . + tweets_ls)
+<<spatial selection>>=
+physact_base_sem <- errorsarlm(update(base_formula,
+                                      physact ~ . + highincome + lowincome),
+                             data = tracts@data, listw = W, zero.policy = TRUE)
+physact_base_sdm <- lagsarlm(update(base_formula,
+                                    physact ~ . + highincome + lowincome),
+                           data = tracts@data, listw = W, zero.policy = TRUE,
+                           type = "mixed")
+pa_base_logincome <- update(physact_base_sem, . ~ . +log(income) - highincome - lowincome)
+test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 @
 
 We estimated SDM and SEM models regressing the physical activity rate against
 against the base covariates (without the accessibility logsum). A likelihood
-ratio test rejects that the SEM is equivalent
+ratio test failed to reject that the SEM is equivalent
 ($\chi^2 = \Sexpr{test_sdmsem$Chisq[2]}$ on \Sexpr{test_sdmsem$Df[2]} degrees of
-freedom), so we use the SDM specification only going forward. Table
-\ref{tab:pa_models} presents the estimated coefficients for the base model as
+freedom), so we use the SEM specification only going forward.
+Table \ref{tab:pa_models} presents the estimated coefficients for the base
+model with income represented in two ways. In the first, the share of the tract
+population in
+the bottom three income deciles and the share of the population in the top three
+income deciles are each included as independent predictors. In the second, the
+logarithm of the mean tract income is included as a predictor.
+Notwithstanding the higher model likelihood of the deciles model, comparing
+coefficients across the models shows that the predictors change magnitude
+or significance only marginally, if at all. Overall, the base model
+predictors are significant and of intuitive direction. Tracts with higher shares
+of full-time workers, college-educated adults, young adults, and high-income
+households all show a greater share of individuals engaging in regular physical
+activity. Conversely, tracts with greater population density and a greater
+share of single adults, children, seniors, minorities of all types, and low
+income households all report lower rates of physical activity.
+
+The other two models presented in Table \ref{tab:pa_models} include
+the log-sum accessibility statistic described in Section
+\ref{subsec:accessibility}  added as a predictor. In both income specifications,
+the
+
+
+base model as
 well as models including logsum-based accessibility with and without Twitter
 activity. A few initial observations can be made from this table. First, adding
 the logsum measurement significantly improves the overall model fit, using a
@@ -683,168 +702,87 @@ likelihood ratio test on the model log-likelihood statistics. Second, the
 coefficient estimates on the controlling variables remain virtually unchanged
 from the base model.
 
+<<access_sdm>>=
+# estimate models
+pa_access_sem <- update(physact_base_sem, .~ . + access_ls)
+pa_access_logincome <- update(pa_access_sem, . ~ . + log(income) - highincome - lowincome)
+pa_models <- list("Base" = physact_base_sem,
+                  "Base: log(Income)" = pa_base_logincome,
+                  "Access" = pa_access_sem,
+                  "Access: log(Income)" = pa_access_logincome)
+
+@
+
+<<screen_pa_models, eval = FALSE>>=
+screenreg(pa_models, digits = 4, table = FALSE,
+          stars = c(0.001, 0.01, 0.05, 0.1) )
+@
+
+
+
 \begin{table*}
-  \caption{Estimated Coefficients Relating Park Access to Physical Activity}
+  \caption{SEM Coefficients Predicting Physical Activity Rates}
   \label{tab:pa_models}
 <<pamodelchart, results="asis">>=
-pa_models <- list(Base = physact_base_sdm, `Access` = pa_access_sdm,
-                       `Access + Tweets` = pa_tweets_sdm)
+termnames <- c("(Intercept)", "log(density)" ,
+               "Full-time workers", "College-educated",  "Single Adults",
+               "Share of children (0-17)", "Share of young adults (18-29)",
+               "Share of seniors (65+)", "Black population share",
+               "Asian population share",
+               "Hispanic population share", "Other Minorities",
+               "Share high income", "Share low income",
+               "$\\lambda$", "$\\log($Income$)$",
+               "Access logsum")
 texreg(pa_models, digits = 4, table = FALSE, single.row = TRUE,
-       booktabs = TRUE, use.packages = FALSE, 
-       custom.coef.names = c("Intercept", termnames, "$\\lambda$",
-                             "Access logsum", 
-                             "Access + Tweets logsum"))
-#' screenreg(pa_models, digits = 4, table = FALSE)
+       booktabs = TRUE, use.packages = FALSE,
+       custom.coef.names = termnames)
 @
 \end{table*}
 
-Recall from the presentation of spatial econometrics above that the total effect of a
-covariate on the dependent variable is different from the estimated coefficient
-and involves interaction between direct and indirect effects, or between
-the $\beta$ and $\gamma$ parameters. This is particularly important when the
-$\beta$ and $\gamma$ estimates for a particular covariate show a different
-sign, such as in the proportion of black residents in a census tract, as
-interpreting the direction and magnitude of the relationship is not straightforward.
 
 
 
-<<extract_impacts>>=
-#' Get the MC simulated impact coefficients and significance from a model
-#' @param sdm An autoregressive lag (SAR or SDM) model object `lagsarlm`
-#' @return A data frame with the effect (direct, indirect, total), variable,
-#'   simulated mean impact, and significance p-value
-extract_impacts <- function(sdm) {
-
-  impacts_summary <- summary(
-    impacts(sdm, tr=trMC,  R = 1000, useHESS = !is.logical(sdm$fdHess)),
-    zstats = TRUE)
-
-  estimate <- list(
-    Direct = impacts_summary$direct_sum,
-    Indirect = impacts_summary$indirect_sum,
-    Total = impacts_summary$total_sum
-  ) %>%
-  lapply(function(s) {
-    data_frame(
-      term = names(s$statistics[,1]),
-      estimate = s$statistics[,1],
-      std.error = s$statistics[,2]
-    )
-  }) %>%
-    bind_rows(.id = "effect")
-
-
-  pval <- as_data_frame(impacts_summary$pzmat) %>%
-    mutate(
-     term = rownames(impacts_summary$pzmat)
-    ) %>%
-    gather("effect", "p-val", -term)
-
-
-  left_join(estimate, pval, by = c("effect", "term"))
-}
-@
-
-\begin{table*}
-  \caption{Simulated Impact of Accessibility on Physical Activity}
-  \label{tab:pa_impacts}
-<<impacts, results="asis">>=
-physact_impacts <- pa_models %>%
-  lapply(extract_impacts) %>%
-  bind_rows(.id = "model") %>% ungroup() %>%
-  rename(submodel = effect)
-
-
-effect_estimate <- physact_impacts %>%
-  filter(model == "Access + Tweets", term == "tweets_ls", submodel == "Total") %>%
-  pull(estimate)
-
-density_estimate <- physact_impacts %>%
-  filter(model == "Access + Tweets", term == "log(density)", submodel == "Total") %>%
-  pull(estimate)
-
-physact_impacts %>%
-  transmute(
-    model, term, submodel, estimate,
-    output = paste(round(`p-val`, 5),
-                   gtools::stars.pval(`p-val`))
-  ) %>%
-  filter(term %in% c("access_ls", "tweets_ls"), submodel == "Total") %>%
-  dplyr::select(-term, -submodel) %>%
-  kable("latex", booktabs = T, escape = FALSE,
-        col.names = c("Logsum Measure", "Estimate", "$p$-value")) %>%
-  footnote("$^{***}p<0.001$, $^{**}p<0.01$, $^*p<0.05$", escape = F)
-@
-\end{table*}
-
-Table \ref{tab:pa_impacts} shows the simulated marginal impact of the
-accessibility logsum measurements on the physical activity rate in each tract.
-Given that the logsum is a relatively continuous measure over space, and that it
-would be difficult to improve the park accessibility of a tract without also
-improving the accessibility of the tract's neighbors, the total effect combining
-the direct effect and the indirect effects of all neighbors is
-most appropriate. The total effect of tract-level accessiblity on physical
-activity rates is strongly significant, regardless of whether we consider Twitter
-activity.
-
-It is of course necessary to also consider the magnitude of the effect.
-As this is a semi-log model, the coefficient implies a unit increase
-in the access and tweets logsum leads to a
-\Sexpr{round(effect_estimate * 100, 3)}\% increase in the physical activity rate.
-Referring to the map of logsum measures in Figure \ref{fig:map}, the measures
-span from roughly $-3$ in heavily industrialized segments of southern Brooklyn
-to roughly $3$ in tracts immediately adjacent to Central Park on the Upper East
-Side. Thus moving from the least accessible parts of the city to the most
-accessible will reduce the expected physical activity rate by
-\Sexpr{round(effect_estimate * 100 * 6, 3)}\%. In other words, if a tract with 
-poor accessibility is expected to achieve the sample mean of 
-\Sexpr{round(mean(tracts$physact), 1)}\%, the same tract with excellent accessibility
-is expected to achieve a rate of 
-\Sexpr{round(mean(tracts$physact) * (1 + effect_estimate  * 6), 2)}\%. 
-For an aggregate statistic strongly influenced by other socioeconomic factors, 
-this is not an insubstantial marginal effect.
 
 <<obesity_models>>=
-obese_access_sdm <- update(pa_access_sdm, obesity ~ .)
-obese_physact_sdm <- update(obese_access_sdm, . ~ . + physact)
+obesity_models <- lapply(pa_models, function(model){
+  update(update(model, obesity ~ . ))
+})
+
+names(obesity_models) <- names(pa_models)
 @
 
-
-We now consider the impacts of a model where the dependent variable is 
+<<screen_obese_models, eval = FALSE>>=
+screenreg(obesity_models, digits = 4, table = FALSE,
+          stars = c(0.001, 0.01, 0.05, 0.1) )
+@
+We now consider the impacts of a model where the dependent variable is
 the {\em obesity} rate, and physical activity becomes an independent covariate
-alongside the controlling variables and the tweets-augmented logsum variable. 
-Table \ref{tab:obese_impacts} presents the simulated impacts resulting from
-this model.
+alongside the controlling variables and the accessibility logsum variable.
 
 \begin{table*}
-  \caption{Simulated Impacts of Variables on Obesity}
-  \label{tab:obese_impacts}
-<<tab:obese_impacts, results="asis">>=
-extract_impacts(obese_physact_sdm) %>%
-  group_by(effect) %>%
-  transmute(
-    term,
-    output = paste(round(`estimate`, 5),
-                   "(",round(`std.error`, 5),")",
-                   gtools::stars.pval(`p-val`)),
-    order = row_number()
-  ) %>%
-  spread(effect, output) %>%
-  arrange(order) %>%
-  dplyr::select(-order) %>%
-  mutate(
-    term = c(termnames, "Access + Tweets logsum", "log(Physical Activity Rate)")
-  ) %>%
-  kable("latex", booktabs = T, escape = FALSE, digits = 3, 
-        col.names = c("", "Direct", "Indirect", "Total")) %>%
-  footnote("$^{***}p<0.001$, $^{**}p<0.01$, $^*p<0.05$", escape = F)
+  \caption{SEM Coefficients Predicting Obesity Rates}
+  \label{tab:obese_models}
+<<obesemodelchart, results="asis">>=
+termnames <- c("(Intercept)", "log(density)" ,
+               "Full-time workers", "College-educated",  "Single Adults",
+               "Share of children (0-17)", "Share of young adults (18-29)",
+               "Share of seniors (65+)", "Black population share",
+               "Asian population share",
+               "Hispanic population share", "Other Minorities",
+               "Share high income", "Share low income",
+               "$\\lambda$", "$\\log($Income$)$",
+               "Access logsum")
+texreg(obesity_models, digits = 4, table = FALSE, single.row = TRUE,
+       booktabs = TRUE, use.packages = FALSE,
+       custom.coef.names = termnames)
 @
 \end{table*}
+
 
 
 \section{Discussion}
 
-We readily acknowledge limitations in this study. To begin, it would be beneficial 
+We readily acknowledge limitations in this study. To begin, it would be beneficial
 to have estimated the logsum coefficients from a high-quality survey rather than
 asserting them to match {\em a priori expectations of}
 
