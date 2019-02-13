@@ -21,7 +21,7 @@ MASTER = manuscript.pdf
 # Windows will require different LaTeX output
 # suppressors (>/dev/null will not be recognized)
 
-BIBDATA = ./doc/bibliography.bib
+BIBDATA = ./citations.bib
 
 all: $(MASTER)
 	@ make clean
@@ -51,7 +51,7 @@ realclean: clean
 
 docx: manuscript.tex
 	@ echo + Creating MS Word .docx from .tex
-	@ pandoc -s $< -o doc/resiliency.docx --bibliography=$(BIBDATA) --csl=$(CSL)
+	@ pandoc -s $< -o park_access.docx --bibliography=$(BIBDATA) 
 
 
 

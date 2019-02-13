@@ -31,21 +31,20 @@ Brigham Young University\\
 Provo, UT 84602\\
 USA}
 \begin{abstract}
-This research identifies the correlation between size and access to urban parks
-and physical activity and obesity outcomes at the neighborhood level. Proximity
-to parks is associated with increased physical activity and reduced obesity, but
-little research has been conducted on the relationship between accessibility to
-parks and health outcomes. Using data for three urban areas, we created a new
-measure for access to parks called ‘park choice accessibility.’ Park choice
-accessibility uses a gravity model to interact distance to parks and the quality
-of those parks as defined by their size. A small park very close to a
-neighborhood can have a major impact, but a larger park at a similar distance
-may have an even larger impact. Similarly, a large park can be further away and
-still have an impact on health outcomes. Using spatial econometric analysis, we
-assess whether park choice accessibility is associated with increased physical
-activity or decreased prevalence of obesity at the neighborhood level. The
-analysis controls for socioeconomic covariates such as age, marital status,
-income, and educational attainment.
+Recent research has underscored the potential for public green spaces to 
+influence individual and societal health outcomes, but 
+empirical measurements of such influences have yielded mixed results to date, with
+particular disagreement surrounding how access to parks ought to be defined while
+controlling alternate explanations. In this paper we present a comprehensive 
+measure of park accessibility drawn from random utility choice theory, which avoids
+arbitrary assertions of proximity while incorporating potentially numerous 
+amenities and attributes of both the parks and the population. We apply this 
+choice-based accessibility measure to Census tract-level health and 
+socioeconomic data in New York City, paired with geographic parks data and  
+and geolocated data collected from the Twitter API. Controlling for the 
+socioeconomic variables and spatially correlated error terms, we show a positive
+but suggestive relationship between park access and physical activity rates, and
+a clear negative relationship between park access and obesity rates.
 \end{abstract}
 
 
@@ -77,7 +76,7 @@ knit_hooks$set(inline = function(x) {
 The United States is currently facing an epidemic of obesity and chronic
 diseases, which are non-communicable diseases of long duration and typically
 slow development, including cardiovascular diseases, chronic respiratory
-diseases, diabetes, stroke, joint and bone diseases, and cancer \citep{WHO2014}
+diseases, diabetes, stroke, joint and bone diseases, and cancer.
 Recent statistics suggest that approximately 300,000 premature deaths each year
 can be attributed to chronic diseases \citep{WHO2014}.
 According to \citet{Finkelstein2009}, obese Americans spend approximately
@@ -86,19 +85,16 @@ average weight, totaling \$147 billion in direct medical expenses nationally.
 
 While a moderate amount of regular physical activity has been established as an
 effective strategy for reducing and managing obesity and many of the
-aforementioned chronic diseases \citet{CDC2009, Durstine2013},
-\citet{Wolf2008} notes that “more than 50 percent of U.S. adults do not get enough
-physical activity to provide health benefits; 24 percent are not active at all
-in their leisure time. Activity decreases with age and sufficient activity is
-less common among women than men, and among those with lower incomes
-and less education” (p. 22). As the epidemiological transition from
+aforementioned chronic diseases \citep{CDC2009, Durstine2013},
+\citet{Wolf2008} observed that a large portion of U.S. adults do not participate
+in sufficient physical activity, a problem compounded by age and socioeconomic status. As the epidemiological transition from
 infectious to chronic diseases is now complete in the developed world,
 increasing physical activity has become a vital public health task in the 21st
 century.
 
 Until recently, most large-scale health promotion efforts focused on
 individual-level interventions intended to educate people about healthy
-lifestyles and behaviors, touching on topics including diet and exercise.
+lifestyles and behaviors, touching on topics including diet and exercise. 
 According to \citet{Coutts2008} however, this trend is shifting as professionals
 “have begun adopting an ecological paradigm, accepting that both individual and
 environmental determinants play a role in health behavior. This new, arguably
@@ -107,28 +103,32 @@ you are) but also for the contextual (where you are) influences on physical
 activity.” As professionals begin to operate from the assumption that the design
 and configuration of the built environment can facilitate or inhibit physical
 activity, they are increasingly looking to public spaces like parks and
-greenways as key elements of the built environment that can support exercise
-\citep{Bedimo-Rung2005a}.
+greenways as key elements of the built environment that can support physical 
+activity \citep{Bedimo-Rung2005a}.
 
-In this paper, we present a holistic and flexible measurement for park
-accessibility based in random utility choice theory. This measure can consider 
-the continuous
-distance to all parks in the region, weighted by the size of the park and other
-amenities. We apply this measurement to study the link between park
+In spite of this interest and the numerous studies attempting to empirically 
+estimate the strength of such support, evidence to date has been mixed. 
+A major challenge researchers have faced is a proliferation of techniques for
+measuring access to green spaces, of which many are plausible but lack 
+analytical or theoretical basis. In this paper, we present a holistic 
+and flexible measurement for park accessibility based in random utility 
+choice theory. This choice-based accessibility measure compares the continuous
+distance to all parks in the region, weighted against the size of the park and 
+its other amenities. We apply this measurement to study the link between park
 accessibility and attractiveness and Census tract-level aggregate physical
 activity participation and obesity rates in New York City, controlling for
 spatial correlation and tract-level socioeconomic characteristics. 
 We find a positive relationship where the
 least park-accessible tracts have an expected physical activity participation
-rate XX percent lower than the most accessible tracts, though this result is 
-only suggestive of correlation from a statistical perspective.
-However, we also find a strong and significant negative correlation between 
+rate half a percentage point lower than the most accessible tracts, though 
+this result is only suggestive of correlation from a statistical perspective.
+However, we also find a strong and significant correlation between 
 increased park accessibility and decreased obesity rates, again controlling for
 spatial correlation, socioeconomic attributes, and physical activity rates. 
 
 We also demonstrate how the choice-based accessibility metric could potentially 
 be expanded to account for other elements of a park's attractiveness by 
-introducing the number of tweets emanating from the park during 
+introducing the number of tweets emanating from within a park during 
 (WE NEED TO DESCRIBE THE PERIOD). The paper concludes with a discussion of
 opportunities for future research.
 
@@ -172,12 +172,10 @@ Economic Health & Provide ecosystem services\\
 
 In spite of these generally positive findings, the evidence of a specific link
 between green space and physical activity is somewhat mixed.
-\citet{Wolf2008} report
-residents self-identify as more active and attaining a higher quality of life when
-a greater portion of the environment is greenspace.
-\citet{Larson2016}
-used self-reported scores on the Gallup-Healthways Wellbeing
-Index (citation) to evaluate the relationship between different areas of wellbeing,
+\citet{Wolf2008} reports that people self-identify as more active and attain a 
+higher quality of life when a greater portion of their environment is greenspace.
+\citet{Larson2016} similarly used self-reported scores on the Gallup-Healthways Wellbeing
+Index to evaluate the relationship between different areas of wellbeing,
 including physical health, and park quantity, quality, and accessibility in 44
 U.S. cities. While the authors found positive associations between wellbeing
 and park quality and accessibility, these relationships were not statistically
@@ -188,14 +186,12 @@ between the density of parkland, parkland per capita, and levels of physical
 activity and obesity for 67 metropolitan statistical areas in the U.S. The study
 found a significant, positive association between park density and physical
 activity and a significant, negative association between park density and
-obesity.
-Conversely, \citet{Richardson2012} examined the
+obesity. Conversely, \citet{Richardson2012} examined the
 relationship between urban greenspace and selected mortality rates, and though the authors
 did not find a statistically significant relationship between the quantity of
 urban greenspace and mortality caused by lung cancer, diabetes, heart disease or
 car accidents, they did find that all-cause mortality was significantly higher in
-greener cities.
-In a meta-analysis of 20 peer reviewed journal articles
+greener cities. In a meta-analysis of 20 peer reviewed journal articles
 exploring the relationship between parks and objectively measured physical
 activity, \citet{Bancroft2015} found that five studies reported a significant
 positive association between the two, six studies produced mixed results, and
@@ -203,9 +199,9 @@ nine studies found no association at all.
 
 While several of the aforementioned studies reported results consistent with the
 hypothesis that park access and use confer health benefits stemming from
-increased physical activity and attendant decreases in obesity, all of the
-studies -- except some included in the meta-analysis by \citet{Bancroft2015} -–
-were conducted at the level of the city or metropolitan statistical area.
+increased physical activity and attendant decreases in obesity, the large majority
+of extant research has been conducted at the level of the city or 
+metropolitan statistical area.
 Metropolitan-level analyses do not capture the within-city variation in
 accessibility to parks that exist in many cities. Some cities with large amounts
 of total greenspace may nevertheless inequally distribute this space throughout
@@ -244,19 +240,19 @@ identified four broad categories of studies based on the metric employed:
 
 Importantly, \citeauthor{Vale2016} acknowledge that there is not yet a
 consensus on the most appropriate accessibility metric to use in a given
-setting, noting that ''ways to measure active accessibility are as varied as the
-number of scholars the measure them.'' This is at least partly because
+setting, noting that ``ways to measure active accessibility are as varied as the
+number of scholars the measure them.''(p. 227) This is at least partly because
 each method has inherent strengths and weaknesses.
 Distance is an inherently continuous phenomenon, but software tools ease and enable
 buffer analyses where distance becomes a binary phenomon of somewhat arbitrary
 extent. \citet{Logan2017} note that these commonly used approaches can also lead
 researchers to overlook access-poor populations.
 Infrastructure-based distances can vary widely
-depending on which modes of travel are considered. a highway network may not
+depending on which modes of travel are considered: a highway network may not
 adequately capture trails and bike paths.
 Similarly, gravity-based measures may not always account for surrounding land
 uses when considering the attractiveness or impedance of a destination; the
-findings of \citet{Pretty2005} and other suggest unpleasant pedestrian routes
+findings of \citet{Pretty2005} and others suggest unpleasant pedestrian routes
 attenuate perceived travel costs.
 
 Though there is no shortage of possible accessibility metrics, in this paper
@@ -284,26 +280,32 @@ estimated from household surveys, though in the absence of a survey we
 may assert reasonable values.
 
 A key theoretical outcome of random utility choice models is that the
-consumer surplus, or the total weighted value of all alternatives of the choice set, can
-be obtained as the log-sum of the denominator of the choice probability equation
-\citep{Small1981}:
+consumer surplus to individual $i$, or the total weighted value of all 
+alternatives in individual $i$'s choice set, can
+be obtained as the logarithm of the sum in the denominator of the choice 
+probability equation \citep{Small1981}:
 \begin{equation}\label{eq:cs}
-CS_i = \ln\left({\sum_{p \in J}\exp(V_{ip})}\right)
+C_i = \ln\left({\sum_{p \in J}\exp(V_{ip})}\right)
 \end{equation}
-There are several advantages to a log-sum defined metric relative to
+There are several advantages to such a log-sum defined metric relative to
 buffer-based accessibility metrics more commonly found in the literature. First,
 all individuals are defined as having some access to all parks, rather than an
-arbitrary cutoff asserted by the researcher. This allows for the fact that some
-people are more or less sensitive to distances, and that distance is a
-continuous, non-binary phenomenon. Second, the random utility formulation
-allows the researcher to include any attribute of the park; in this case, we
-consider the size of the park as an element of accessibility. This suggests that
+arbitrary cutoff asserted by the researcher. 
+This allows for the fact that some people are more or less sensitive to 
+distances, and that distance is a continuous, non-binary phenomenon. 
+It defies reason to assume person living 1.1 miles 
+from a park has functionally different accessibility than someone living at 0.9 miles.
+Second, the random utility formulation
+allows the researcher to include any attribute of the park as part of its utility
+specification; in this case, we consider the size of the park weighted against its
+distance as an element of relative accessibility. This suggests that
 not all parks are equal, and that a large park such as Central Park on Manhattan
 may provide health and activity benefits over a much larger area than a smaller
 community square.
 
 Note that this formulation is an extension of the gravity-based accessibility
-statistics, in the same way that the gravity model is a specific case of
+statistics, in the same way that the gravity-based trip distribution model model 
+is a specific case of
 a destination-choice model \citep{Daly1982}. But the extension is meaningful, and
 allows us to consider more attributes of the park or the indivdual beyond size
 and impedance. For example, we can aggregate the number of tweets emanating from
@@ -313,13 +315,16 @@ utility for the choice maker from Equation \ref{eq:v_sd} then becomes
 V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d + tweets_j\lambda_t
 \end{equation}
 
-In spite of its advantages, logsum-based accessibilities have not received
-as much application in the accessibility literature as distance-based or even
-gravity-based measures. They are commonly used, however, in alternatives analyses of
+In spite of its flexibility and basis in choice theory, accessibility measures 
+based in log-sums
+have not received much application in the accessibility literature compared with
+distance-based or even
+gravity-based measures. \citet{Zhang2011} present a metric with a similar functional
+form, though the authors arrive at it from a motivation other than destination 
+choice theory. Log-sums are commonly used, however, in alternatives analyses of
 transit infrastructure improvements \citep{DeJong2007}. A reason for this is
-likely that such alternatives analyses are usually conducted in the context of a travel
-demand model, where calibrated and multimodal logsums are readily available
-\citep{Geurs2010}.
+likely that a regional travel demand model is available to the analysts, thus making 
+calibrated and multimodal logsums are readily available \citep{Geurs2010}.
 
 \section{Empirical Application}
 In this section we describe an experiment with data for New York City, where
@@ -369,15 +374,15 @@ tracts@data <-  tbl_df(tracts@data) %>%
 @
 
 This study uses data available to the public from a variety of federal and state
-data agencies. The datasets, as well as the analysis code, is available on GitHub
-at \url{https://github.com/boydnpb/park_access_new.git}
+data agencies. The datasets, as well as the analysis code, are available on GitHub
+at \url{https://github.com/boydnpb/park_access_new.git}.
 The primary dataset is a geographic polygons shapefile of Census tracts in
 New York City. We appended relevant sociodemographic data for each tract level
 from the American Community Survey 2011-2015 5-year estimates. Data on physical
 activity participation rate and obesity rates for each tract are available from
 the Centers for Disease Control and Prevention’s 500 Cities Project (WE NEED A CITATION).
 After removing tracts with missing population information or outlying and unusual
-characteristics, we have Sexpr{nrow(tracts)} complete cases. Table
+characteristics, we have \Sexpr{nrow(tracts)} complete cases. Table
 \ref{tab:tractsdata} presents key descriptive statistics for these data.
 
 <<parks>>=
@@ -391,8 +396,8 @@ parks <- sf::st_read("data/nyc_parks.geojson", quiet = TRUE) %>%
   filter(size > 0.5)
 @
 
-In a destination choice framework, the tracts represent the "origins" and
-"destinations" are parks in New York City.
+In a destination choice framework, the tracts represent the ``origins'' and
+``destinations'' are parks in New York City.
 We retrieved a shapefile of public parks and greenspaces within New York City’s
 municipal boundaries and checked it for accuracy and relevance (WE NEED A CITATION).
 Upon inspection,
@@ -473,10 +478,10 @@ We predict the rate of physical activity ($y$) in a census tract as a
 function of the tract's sociodemographic characteristics and choice-based
 accessibility to parks with the following  specification:
 \begin{equation}\label{eq:themodel}
- y_i = f(\vect{x}_i, CS_i, g(W, \vect{y}, \vect{X}))
+ y_i = f(\vect{x}_i, C_i, g(W, \vect{y}, \vect{X}))
 \end{equation}
 where $\vect{x}_i$ is a vector of tract-level sociodemographic attributes,
-$CS_i$ is a choice-based accessibility measure for the tract computed from
+$C_i$ is a choice-based accessibility measure for the tract computed from
 Equation \ref{eq:cs} and $g(W, \vect{y}, X)$ represents the impact of spatial
 neighborhood effects on the outcome.
 
@@ -511,7 +516,7 @@ a likelihood ratio test of the SDM against the restricted spatial error model (S
 \end{align}
 If the likelihood ratio test rejects that the models are equivalent, then the SDM
 should be used because its estimates are unbiased. If the test cannot reject
-equivalents, the SEM is more efficient.
+equivalence, the SEM is more efficient.
 
 The researcher must assert $W$ {\em a priori}, though there are several
 common specifications \citep{Dubin1998}. In this study we specify that tracts
@@ -541,8 +546,8 @@ W <- nb2listw(neighbours = tracts.dnn, glist = dists.inv,
               zero.policy = TRUE, style = "W")
 trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
 @
-This is a similar specification to then one \citet{tra_autoregression_paper} 
-used in a study of home prices in Atlanta. We selected this specification after 
+This is a similar specification to that used by  \citet{tra_autoregression_paper} 
+in a study of home prices in Atlanta. We selected this specification after 
 comparing overall model likelihoods between it and an adjacent (queen)
 tract specification.
 
@@ -632,7 +637,8 @@ parameter value, in this case it was unsatisfactory for two reasons: first,
 our prior assertion that park size is a valuable attribute of a park, and second
 the observation that with these maximum likelihood values tracts bordering on 
 the corners of
-Central Park were measured with poor overall accessibility. We subsequently 
+Central Park were measured with poor overall accessibility, a unacceptably 
+unintuitive result. We subsequently 
 adjusted the $\lambda_s$ value to $0.3$; the relative ratio of the coefficients 
 implies that all else equal, an individual would travel 6.6 times further to
 access a park twice as large.
@@ -669,7 +675,7 @@ access is in upper Manhattan and the Bronx, bracketed by Central Park and the
 Bronx River. Conversely, some of the poorest-accessibility areas are in 
 Brooklyn tracts not immediately adjacent to Prospect Park. Because the 
 accessibility statistic is normalized, the worst values are slightly below $-3$, 
-the best somehere above $3$. 
+the best somewhere above $3$. 
 
 
 \begin{figure*}
@@ -682,9 +688,9 @@ map +
   geom_sf(data = tracts_sf, inherit.aes=FALSE,
           aes(fill = cut(access_ls, breaks = c(-Inf, -3, -2, -1, 0, 2, 3, Inf))),
           alpha = 0.8, color = NA) +
-  scale_fill_brewer("Relative Park Logsum", palette = "GnBu")
+  scale_fill_brewer("Normalized Log-sum", palette = "GnBu")
 @
-  \caption{Relative surplus-based accessibility in New York City}
+  \caption{Normalized choice-based park accessibility log-sum values in New York City}
   \label{fig:map}
 \end{figure*}
 
@@ -735,8 +741,8 @@ share of single adults, children, seniors, minorities of all types, and low
 income households all report lower rates of physical activity.
 
 The other two models presented in Table \ref{tab:pa_models} include
-the log-sum accessibility statistic described in Section
-\ref{subsec:accessibility}  added as a predictor. In both income specifications,
+the log-sum accessibility statistic described in above added as a predictor. 
+In both income specifications,
 the access logsum is positively correlated with physical activity rates; all else
 equal, people in tracts with higher accessibility to parks report higher rates of
 physical activity. The estimated value of this coefficient and its standard
@@ -803,7 +809,7 @@ screenreg(obesity_models, digits = 4, table = FALSE,
 We now consider the impacts of a model where the dependent variable is
 the {\em obesity} rate, and physical activity becomes an independent covariate
 alongside the controlling variables and the accessibility logsum variable. 
-Table \ref{tab:obese_model} presents the estimated coefficients for both
+Table \ref{tab:obese_models} presents the estimated coefficients for both
 income specifications, with and without the accessibility logsum. As in the 
 physical activity models, the coefficients are largely significant and
 in the expected sign. The accessibility coefficient has practically the same 
@@ -841,12 +847,12 @@ might be seen as a measure of the park's popularity, or a proxy for its use. It
 may be construed that parks with high popularity or use contain other amenities
 that encourage residents to use the park space, raising physical activity rates
 and lowering obesity rates beyond what would be expected with the park's size
-and proximity alone. It it reasonable to question whether park size and twitter
+and proximity alone. It is reasonable to question whether park size and Twitter
 activity are highly correlated, and thus would result in a double-counting of
 park size in the accessibility statistic. In our 
 data the number of tweets is positively but only loosely correlated  with park 
-size in our data ($\rho = \Sexpr{cor(parks$log_size, parks$log_tweets)}$), indicating
-that the Twitter data in fact could provide new information or proxy for the 
+size in our data ($\rho = \Sexpr{round(cor(parks$log_size, parks$log_tweets), 3)}$), 
+indicating that the Twitter data in fact could provide new information or proxy for the 
 desired amenities.
 
 To test this hypothesis, we can use the twitter data described earlier
@@ -856,11 +862,12 @@ log-transform all the components of utility:
 V_{ij} = \log(size_j)\lambda_s + \log(distance_{ij})\lambda_d + g(tweets_j)\lambda_t
 \end{equation}
 where $g(x)$ is a Yeo-Johnson transformation to preserve cases where $log(0)$
-would be otherwise undefined. As before, there is little information by which to
+would be otherwise undefined \citep{Yeo2000}. As before, there is little 
+information by which to
 determine the values of $\lambda$ in this utility specification; we use the
 previous values with the addition of $\lambda_t = 0.1$. The ratio between the 
 utility coefficients implies residents would travel almost twenty times as far or
-use a park three times smaller if it had twice the twitter activity, all else 
+use a park three times smaller if it had twice the Twitter activity, all else 
 equal. 
 
 Figure \ref{fig:tweets_map} shows the percent change in the normalized log
@@ -885,7 +892,7 @@ map +
           alpha = 0.8, color = NA) +
   scale_fill_brewer("Percent Change", palette = "PiYG")
 @
-  \caption{Percent change in relative accessibility when accounting for Twitter 
+  \caption{Percent change in relative accessibility to parks when accounting for Twitter 
   activity.}
   \label{fig:tweets_map}
 \end{figure*}
@@ -898,20 +905,19 @@ tweets_models <- list(pa_models[[3]], pa_models[[4]],
   })
 @
 
-Table \ref{tab:tweets_models} presents the estimated coefficients relating
+Table \ref{tab:tweets_coefs} presents the estimated coefficients relating
 accessibility to obesity and physical activity rates, with and without the 
 inclusion of Twitter data. In all four cases, including twitter information in
 the accessibility statistic tempers the strength of the relationship with the
 dependent variable and modestly widens the standard error without substantively
 affecting the significance of the test statistics.  
-From this limited example,
-it appears Twitter activity does not enhance the ability of parks to induce 
-physical activity rates or lower obesity rates, though further investigation 
-of this and other park amenities would certainly be warranted. 
+From this limited example, we cannot say whether Twitter activity enhances the 
+ability of parks to induce physical activity rates or lower obesity rates, 
+though further investigation of this and other park amenities would certainly 
+be warranted. 
 
 
-
-<<tab:tweets_models, results="asis">>=
+<<tweets_coefs, results="asis">>=
 names(tweets_models) <- c("Physical Activity: High and Low Income", 
                           "Physical Activity: log(Income)",
                           "Obesity: High and Low Income", "Obesity: log(Income)")
@@ -923,7 +929,7 @@ lapply(c(tweets_models, pa_models, obesity_models), function(model){
   s <- summary(model)
   as_data_frame(s$Coef) %>%
     mutate(term = rownames(s$Coef)) %>%
-    select(term, estimate = Estimate, std.error = `Std. Error`, 
+    dplyr::select(term, estimate = Estimate, std.error = `Std. Error`, 
            statistic = `z value`, p.value = `Pr(>|z|)`)
 }) %>%
   bind_rows(.id = "model") %>%
@@ -932,16 +938,16 @@ lapply(c(tweets_models, pa_models, obesity_models), function(model){
   mutate(term = ifelse(term == "tweets_ls", 
                        "Tweets, Size and Distance", "Size and Distance")) %>%
   arrange(desc(y), income, term) %>%
-  select(income, term, estimate, std.error, p.value) %>%
+  dplyr::select(income, term, estimate, std.error, p.value) %>%
 
   kable(escape = FALSE, digits = 4,
-        table.envir = "table*", booktabs = TRUE,
+        table.envir = "table*", booktabs = TRUE, 
         caption = "Estimated Relationship between Accessiblity and Outcomes",
         col.names = c("", "Accessibility Components", "Estimate", "Std. Error",
                       "$p$-value")) %>%
   kable_styling() %>%
-    group_rows("$y = $Physical Activity", 1, 4) %>%
-    group_rows("$y = $Obesity", 5, 8)
+    group_rows("y = Physical Activity", 1, 4) %>%
+    group_rows("y = Obesity", 5, 8)
 @
 
 \section{Limitations and Future Research Direction}
@@ -952,7 +958,7 @@ fallacy, where aggregate statistics mask or contradict disaggregated or
 individual-level trends. A large-sample survey of individuals in New York City,
 including measured physical activities and obesity would always be prefferable
 to the tract-level data used in this study. It would be also be
-preferrable to have obtained the $\lambda$ accessibility utility coefficients 
+preferrable to have obtained the $\vect{\lambda}$ accessibility utility coefficients 
 from a high-quality survey of leisure destination choice rather than
 asserting them to match our prior expectations of what constitutes quality
 park access. An ideal survey to address the question would incorporate both sets
@@ -980,6 +986,15 @@ adding Twitter activity as an an element of a park's attractiveness above and
 beyond its size. Exploring additional amenities or market segmentation strategies
 could provide a more definitive understanding of the relationship between park 
 accessibility and health outcomes.
+
+As a travel impedance measure, we used the Euclidean distance between each tract's 
+population-weighted centroid and the nearest point on the edge of a park's border.
+Euclidean distances have well-rehearsed limitations regarding their fidelity with 
+the underlying infrastructure network, etc.. Network-based distances can also
+suffer from challenges when applied to multimodal problems; these challenges are
+exacerbated when the non-highway mode share is high, as is likely when considering
+access to parks. A better metric of travel impedance may be a mode choice model
+log-sum, which weights all travel alternatives against each other. A
 
 Finally, this study is primarily focused on the hypothesis that accessibility to
 parks encourages physical activity, which in turn reduces obesity. There are a 
