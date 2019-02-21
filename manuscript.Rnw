@@ -62,6 +62,10 @@ library(qwraps2)
 library(knitr)
 library(kableExtra)
 library(texreg)
+library(RSocrata)
+library(tidycensus)
+
+options(tigris_use_cache = TRUE)
 opts_chunk$set(cache=TRUE, message = FALSE, echo = FALSE)
 library(leaflet)
 
@@ -335,18 +339,65 @@ of this accessibility on obesity.
 
 \subsection{Data}
 
-<<tracts>>=
-tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
+<<acs, results='hide'>>=
+# The study area includes the five boroughs of New York City
+counties <- c("081", "047", "061", "005", "085")
+names(counties) <- c("Queens", "Brooklyn", "Manhattan", "Bronx", "Staten Island")
 
-# identify complete cases
-complete_tracts_index <- tracts@data %>%
-  tbl_df() %>%
-  complete.cases()
-tracts <- tracts[complete_tracts_index, ]
+# We need to get lots of variables from the American Community Survey 5-year data.
+# This vector defines the variable names as well as the table/cell in the Census
+# API that each variable is drawn from. The comments help to identify which
+# table name and type they come from.
+variables <- c(
+  "population" = "B25008_001", # TOTAL POPULATION IN OCCUPIED HOUSING UNITS BY TENURE
+  "housing_units" = "B25001_001", # HOUSING UNITS
+  "households" = "B19001_001", #HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2017 INFLATION-ADJUSTED DOLLARS)
+  # Employment status
+  "men_fulltime" = "B23022_004",
+  # Estimate!!Total!!Male!!Worked in the past 12 months!!Usually worked 35 or more hours per week
+  "women_fulltime" = "B23022_028",
+  #Estimate!!Total!!Female!!Worked in the past 12 months!!Usually worked 35 or more hours per week
+  # LIVING ARRANGEMENTS OF ADULTS 18 YEARS AND OVER BY AGE
+  # everyone who
+  "adults" = "B09021_001",
+  "lives_alone" = "B09021_002",
+  "child_of_hhr" = "B09021_005",
+  "other_rel" = "B09021_006",
+  "other_nonrel" = "B09021_007",
+  # EDUCATIONAL ATTAINMENT BY EMPLOYMENT STATUS FOR THE POPULATION 25 TO 64 YEARS
+  "college" = "B23006_016",
+  # RACE
+  "black" = "B02001_003",
+  "asian" = "B02001_005",
+  "pacific" = "B02001_006",
+  "nativeam" = "B02001_004",
+  # HISPANIC OR LATINO ORIGIN BY SPECIFIC ORIGIN
+  # The number of hispanic individuals needs to be drawn from a different table.
+  "hispanic" = "B03001_003",
+  #MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2017 INFLATION-ADJUSTED DOLLARS)
+  "income" = "B19013_001",
+  #HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2017 INFLATION-ADJUSTED DOLLARS)
+  "inc_0010" = "B19001_002",  "inc_1015" = "B19001_003", "inc_1520" = "B19001_004",
+  "inc_2025" = "B19001_005", "inc_2530" = "B19001_006", "inc_3035" = "B19001_007",
+  "inc_125"  = "B19001_015", "inc_150"  = "B19001_016", "inc_200"  = "B19001_017",
+  #AGE BY RATIO OF INCOME TO POVERTY LEVEL IN THE PAST 12 MONTHS.
+  # we really only need the numbers of individuals in each age group, and the groups
+  # are more coarse here than in the sex by age table.
+  "age_0005" = "B17024_002", "age_0611" = "B17024_015", "age_1217" = "B17024_028",
+  "age_1824" = "B17024_041", "age_2534" = "B17024_054",
+  "age_3544" = "B17024_067", "age_4554" = "B17024_080", "age_5564" = "B17024_093",
+  "age_6574" = "B17024_106",
+  "age_75up" = "B17024_119"
+)
 
-
-tracts@data <-  tbl_df(tracts@data) %>%
-  dplyr::transmute(
+acs <- get_acs(geography = "tract", variables = variables, year = 2017,
+               state = "NY", county = counties, geometry = TRUE) %>%
+  select(-moe) %>%
+  spread(variable, estimate) %>%
+  filter(adults > 0) %>%
+  mutate(area = as.numeric(st_area(geometry) * 1e-6)) %>%
+  # area is in m^2, change to km^2
+  transmute(
     geoid = GEOID,
     county_fips = substr(GEOID, 3, 5),
     borough = case_when(
@@ -357,21 +408,62 @@ tracts@data <-  tbl_df(tracts@data) %>%
       county_fips == "085" ~ "Staten Island",
       TRUE ~ as.character(NA)
     ),
-    obesity = OBESITY,
-    physact = 100 - Phys_Act,
-    log_obesity = log(OBESITY),
-    log_physact = log(100 - Phys_Act),
-    density = Pop_Density,
-    fulltime = FulltimeWork, college = CollegeDeg,
-    single = Single_Percent,
-    black = PctBlack, asian = PctAsian, hispanic = PctHispanic,
-    other = PctNative + PctPacific,
-    Pct0to17, Pct18to29, Pct65plus,
-    income = NYC_Income,
-    lowincome = Income1 + Income2 + Income3,
-    highincome = Income8 + Income9 + Income10
+    population, households, housing_units, adults,
+    density = households / area,
+    income,
+    # many of the variables come in raw counts, but we want to consider
+    # them as shares of a relevant denominator.
+    lowincome    = 100 * (inc_0010 + inc_1015 + inc_1520 + inc_2530 +
+                            inc_3035) / households,
+    highincome   = 100 * (inc_125 + inc_150 + inc_200) / households,
+    fulltime     = 100 * (men_fulltime + women_fulltime) / adults,
+    college      = 100 * college / adults,
+    single       = 100 * (lives_alone + child_of_hhr + other_rel +
+                            other_nonrel) / adults,
+    youth        = 100 * (age_0005 + age_0611 + age_1217) / population,
+    young_adults = 100 * (age_1824 + age_2534) / population,
+    seniors      = 100 * (age_6574 + age_75up) / population,
+    black        = 100 * black / population,
+    asian        = 100 * asian / population,
+    hispanic     = 100 * hispanic / population,
+    other        = 100 * (nativeam + pacific) / population
   )
+
 @
+
+
+<<cdc500>>=
+# The CDC 500 cities project makes its data available through the Socrata API.
+# The url endpoints for each data object are different, though we have identified
+# them as below. We pre-filter the data to New York to save ourselves and the
+# API a bit of time.
+cdc_urls <- list(
+  "physact" = "https://chronicdata.cdc.gov/resource/axqz-rkkp.json?stateabbr=NY",
+  "obesity" = "https://chronicdata.cdc.gov/resource/bjvu-3y7d.json?stateabbr=NY"
+)
+
+# For each URL endpoint, get the data through Socrata (you will need your own
+# Socrata API key), filter to the FIPS codes we specified above, and trim
+# to only the data values we want to keep.
+cdc500 <- lapply(cdc_urls, function(url){
+  read.socrata(url, app_token = Sys.getenv("CDC_KEY"),
+               stringsAsFactors = FALSE) %>%
+    tbl_df() %>%
+    filter(tractfips %in% acs$geoid) %>%
+    transmute( geoid = tractfips, value = as.numeric(data_value ), year = year)
+}) %>%
+  bind_rows(.id = "measure") %>%
+  spread(measure, value) %>%
+  mutate(physact = 100 - physact)
+
+@
+
+
+<<tracts>>=
+tracts <- left_join(acs, cdc500, by = "geoid") %>%
+  filter(!is.na(obesity), !is.na(income))
+@
+
 
 This study uses data available to the public from a variety of federal and state
 data agencies. The datasets, as well as the analysis code, are available on GitHub
@@ -413,17 +505,25 @@ generate additional physical activity participation aside from the containing
 park.
 
 <<tractsdata, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
+# This is an index pairing the variable names with the order we want them
+# to be shown in in the table.
 tracts_data_index <- data_frame(
   variable =  c(
-    "obesity", "physact", "income", "lowincome", "highincome",
+    "obesity", "physact", "income",
     "density", "fulltime", "college", "single",
-    "Pct0to17", "Pct18to29",  "Pct65plus", "black", "asian", "hispanic",
-    "other")
-  ) %>% mutate(order = row_number())
+    "youth", "young_adults",  "seniors", "black", "asian", "hispanic",
+    "other"),
+  source = c("CDC 500 Cities", "CDC500 Cities",
+             rep("ACS", 12))
+) %>%
+  mutate(order = row_number())
 
-
-tract_summary <- tracts@data %>%
-  dplyr::select(obesity:highincome) %>%
+# Get the tract SE / health data, calculate group statistics, and get it
+# in the right order
+tract_summary <- tracts %>%
+  st_set_geometry(NULL) %>%
+  tbl_df() %>%
+  dplyr::select(tracts_data_index$variable) %>%
   gather(variable, value) %>%
   group_by(variable) %>%
   summarise(
@@ -435,17 +535,23 @@ tract_summary <- tracts@data %>%
   arrange(order) %>%
   mutate(
     variable = c(
-      "Obesity Rate", "Physical Activity Rate",
-      "Median tract income",
-      "Share of low income",
-      "Share of high income",
-      "Density: population per square mile",
-      "Full-time workers", "College-educated",
-      "Single Adults", "Share of children (0-17)", "Share of young adults (18-29)",
-      "Share of seniors (65+)", "Black population share", "Asian population share",
-      "Hispanic population share", "Other Minorities")
+      "Obesity: Share of adults over 18 who are obese",
+      "Physical Activity: Share of adults over 18 who engage in some leisure-time physical activity",
+      "Income: Median tract income",
+      "Density: Households per square kilometer",
+      "Fulltime: Share of adults over 18 with full-time work",
+      "College: Share of adults over 24 with a college degree",
+      "Single: Share of adults over 18 living alone or in a non-partnership household",
+      "Youth: Share of population under 18",
+      "Young adults: Share of population between 18 and 34",
+      "Seniors: Share of population who are 65 and over",
+      "Black: Share of population who is black",
+      "Asian: Share of population who is Asian",
+      "Hispanic: Share of population who is Hispanic",
+      "Other: Share of population who belong to other minority groups")
   ) %>%
   dplyr::select(-order)
+
 
 park_summary <- parks %>%
   st_set_geometry(NULL) %>%
@@ -457,16 +563,21 @@ park_summary <- parks %>%
     `msd` = paste(median_iqr(value)),
     max = max(value)
   ) %>%
-  mutate( variable = c("Park Size in Acres", "Tweets Emanating from Park"))
+  mutate( 
+    variable = c("Size: Park size in acres", 
+                 "Tweets: Tweets emanating from park in September 2014"),
+    source = c("NYC", "Twitter API")
+    )
 
 bind_rows(tract_summary, park_summary) %>%
+  separate(variable, c("var", "desc"), sep = ": ") %>%
   kable(escape = FALSE, digits = 2,
         table.envir = "table*", booktabs = TRUE,
         caption = "Descriptive Statistics of Tract and Park Variables",
-        col.names = c(" ", "Minimum", "Median (IQR)", "Maximum")) %>%
+        col.names = c(" ", "Description", "Minimum", "Median (IQR)", "Maximum", "Source")) %>%
   kable_styling() %>%
-  group_rows(paste("Tract Variables, N =", nrow(tracts@data)), 1, 16) %>%
-  group_rows(paste("Park Variables, N =", nrow(parks)), 17, 18)
+  group_rows(paste("Tract Variables, N =", nrow(tracts)), 1, 14) %>%
+  group_rows(paste("Park Variables, N =", nrow(parks)), 15, 16)
 
 @
 
@@ -531,10 +642,16 @@ W_{ij} = \begin{cases}
   \end{cases}
 \end{equation}
 <<weights, warning = FALSE>>=
-pop_weighted_centroids <- read_csv("data/CenPop2010_Mean_TR36.csv") %>%
-  mutate(geoid = str_c(STATEFP, COUNTYFP, TRACTCE))
-pop_weighted_centroids <- left_join(tracts@data, pop_weighted_centroids, by = "geoid") %>%
-  dplyr::select(geoid, LONGITUDE, LATITUDE) %>%
+# Instead of using the centroid of the tract geometry, we want to use the 
+# tract's population-weighted centroid.
+pop_weighted_centroids <- tracts %>% tbl_df() %>%
+  dplyr::select(geoid) %>%
+  left_join(
+    read_csv("data/CenPop2010_Mean_TR36.csv") %>%
+      transmute(geoid = str_c(STATEFP, COUNTYFP, TRACTCE), LATITUDE, LONGITUDE)
+  ) %>%
+  # convert to sf and project into the feet-based projection used in the
+  # parks dataset.
   st_as_sf(crs = 4326, coords = c("LONGITUDE", "LATITUDE")) %>%
   st_transform(2263)
 
@@ -644,29 +761,47 @@ implies that all else equal, an individual would travel 6.6 times further to
 access a park twice as large.
 
 <<logsum_betas>>=
-tracts@data <- tracts@data %>%
+# This is where we actually calculate the accessibility statistic, using the
+# distances matrix between tracts (in the rows) and parks (in the columns).
+tracts <- tracts %>%
   mutate(
-    access_ls = calculate_park_logsums(log(distances), parks$log_size,
-                                       betas = c(-1.98, 0.3)),
-    tweets_ls = calculate_park_logsums(log(distances), parks$log_size, parks$log_tweets,
-                                       betas = c(-1.98, 0.3, 0.1)),
-    access_ls = (access_ls - mean(access_ls) )/ sd(access_ls),
-    tweets_ls = (tweets_ls - mean(tweets_ls) )/ sd(tweets_ls)
+    # Log-sum based utilities, without and with Twitter data
+    access_ls = calculate_park_logsums(
+      log(distances), parks$log_size, betas = c(-1.98, 0.3)),
+    tweets_ls = calculate_park_logsums(
+      log(distances), parks$log_size, parks$log_tweets,
+      betas = c(-1.98, 0.3, 0.1)),
+    # Normalize the logsum onto the Z-scale
+    access_ls = (access_ls - mean(access_ls) ) / sd(access_ls),
+    tweets_ls = (tweets_ls - mean(tweets_ls) ) / sd(tweets_ls)
   )
 
-tracts_sf <- tracts %>% st_as_sf() %>% st_transform(4326)
+# also calculate binary accessibility with a point-in-buffer analysis
+# on the population-weighted centroids and the parks
+parks_025_buffer <- st_buffer(parks, 0.25 * 5280)
+inside_025 <- pop_weighted_centroids %>%
+  st_join(parks_025_buffer %>% select(size),
+          st_within, largest = TRUE) %>%
+  filter(!is.na(size))
+
+tracts <- tracts %>%
+  mutate(access_025 = ifelse(geoid %in% inside_025$geoid, TRUE, FALSE))
+
+tracts_sp <- as(tracts, "Spatial")
 @
 
 <<leaflet, eval=FALSE>>=
 # this interactive map is much easier to create and explore
-pal <- colorQuantile("GnBu", tracts_sf$access_ls, n = 5)
-leaflet(tracts_sf) %>%
+pal <- colorQuantile("GnBu", tracts$access_ls, n = 5)
+bin <- colorFactor("Dark2", tracts$access_025)
+leaflet(tracts) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(group = "access", color = ~ pal(access_ls),
               label = ~as.character(round(access_ls,2))) %>%
   addPolygons(group = "tweets", color = ~ pal(tweets_ls),
               label = ~as.character(round(tweets_ls,2))) %>%
-  addLayersControl(baseGroups = c("access", "tweets"))
+  addPolygons(group = "1/4 mile", color = ~ bin(access_025)) %>%
+  addLayersControl(baseGroups = c("access", "tweets", "1/4 mile"))
 @
 
 Figure \ref{fig:map} shows a map of New York City with each tract highlighted
@@ -682,10 +817,10 @@ the best somewhere above $3$.
 
 <<map, echo=FALSE, message=FALSE, warning=FALSE>>=
 library(ggmap)
-map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner-lite"),
+map <- ggmap(get_map(unname(st_bbox(tracts)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
 map +
-  geom_sf(data = tracts_sf, inherit.aes=FALSE,
+  geom_sf(data = tracts, inherit.aes=FALSE,
           aes(fill = cut(access_ls, breaks = c(-Inf, -3, -2, -1, 0, 2, 3, Inf))),
           alpha = 0.8, color = NA) +
   scale_fill_brewer("Normalized Log-sum", palette = "GnBu")
@@ -698,24 +833,19 @@ map +
 
 <<base_formula>>=
 base_formula <- formula(
-  ~ log(density) +
+  ~ log(density) + log(income) + 
     fulltime + college + single +
-    Pct0to17 + Pct18to29 + Pct65plus + # need to leave out a category for collinearity
+    youth + young_adults + seniors + # need to leave out a category for collinearity
     black + asian + hispanic + other)
-
-
 @
 
 
 <<spatial selection>>=
-physact_base_sem <- errorsarlm(update(base_formula,
-                                      physact ~ . + highincome + lowincome),
-                             data = tracts@data, listw = W, zero.policy = TRUE)
-physact_base_sdm <- lagsarlm(update(base_formula,
-                                    physact ~ . + highincome + lowincome),
-                           data = tracts@data, listw = W, zero.policy = TRUE,
-                           type = "mixed")
-pa_base_logincome <- update(physact_base_sem, . ~ . +log(income) - highincome - lowincome)
+physact_base_sem <- errorsarlm(update(base_formula, physact ~ .),
+                               data = tracts_sp, listw = W, zero.policy = TRUE)
+physact_base_sdm <- lagsarlm(update(base_formula, physact ~ .),
+                             data = tracts_sp, listw = W, zero.policy = TRUE,
+                             type = "mixed")
 test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 @
 
@@ -758,12 +888,11 @@ with a wide confidence interval around that estimate.
 <<access_sdm>>=
 # estimate models
 pa_access_sem <- update(physact_base_sem, .~ . + access_ls)
-pa_access_logincome <- update(pa_access_sem, . ~ . + log(income) - highincome - lowincome)
-pa_models <- list("Base" = physact_base_sem,
-                  "Base: log(Income)" = pa_base_logincome,
-                  "Access" = pa_access_sem,
-                  "Access: log(Income)" = pa_access_logincome)
+pa_quarter_sem <- update(physact_base_sem, .~ . + access_025)
 
+pa_models <- list("Base" = physact_base_sem,
+                  "Access: logsum" = pa_access_sem,
+                  "Access: 1/4 mile" = pa_quarter_sem)
 @
 
 <<screen_pa_models, eval = FALSE>>=
@@ -776,18 +905,17 @@ screenreg(pa_models, digits = 4, table = FALSE,
   \caption{SEM Coefficients Predicting Physical Activity Rates}
   \label{tab:pa_models}
 <<pamodelchart, results="asis">>=
-termnames <- c("(Intercept)", "log(density)" ,
-               "Full-time workers", "College-educated",  "Single Adults",
-               "Share of children (0-17)", "Share of young adults (18-29)",
-               "Share of seniors (65+)", "Black population share",
+termnames <- c("(Intercept)", "log(density)", "$\\log($Income$)$",
+               "Fulltime", "College-educated",  "Single Adults",
+               "Youth (0-17)", "Young adults (18-34)",
+               "Seniors (65+)", "Black population share",
                "Asian population share",
                "Hispanic population share", "Other Minorities",
-               "Share high income", "Share low income",
-               "$\\lambda$", "$\\log($Income$)$",
-               "Access logsum")
+               "$\\lambda$", "Access logsum", "1/4 mile access")
+
 texreg(pa_models, digits = 4, table = FALSE,
        booktabs = TRUE, use.packages = FALSE,
-       custom.coef.names = termnames,  stars = c(0.001, 0.01, 0.05, 0.1))
+       custom.coef.names = termnames)
 @
 \end{table*}
 
@@ -823,18 +951,17 @@ conventional $0.05$ level in each income representation.
   \caption{SEM Coefficients Predicting Obesity Rates}
   \label{tab:obese_models}
 <<obesemodelchart, results="asis">>=
-termnames <- c("(Intercept)", "log(density)" ,
-               "Full-time workers", "College-educated",  "Single Adults",
-               "Share of children (0-17)", "Share of young adults (18-29)",
-               "Share of seniors (65+)", "Black population share",
+termnames <- c("(Intercept)", "log(density)", "$\\log($Income$)$",
+               "Fulltime", "College-educated",  "Single Adults",
+               "Youth (0-17)", "Young adults (18-34)",
+               "Seniors (65+)", "Black population share",
                "Asian population share",
                "Hispanic population share", "Other Minorities",
-               "Share high income", "Share low income",
-               "$\\lambda$", "$\\log($Income$)$",
-               "Access logsum")
-texreg(obesity_models, digits = 4, table = FALSE, 
+               "Physical activity",
+               "$\\lambda$", "Access logsum", "1/4 mile access")
+texreg(obesity_models, digits = 4, table = FALSE,
        booktabs = TRUE, use.packages = FALSE,
-       custom.coef.names = termnames,  stars = c(0.001, 0.01, 0.05, 0.1))
+       custom.coef.names = termnames,  stars = c(0.001, 0.01, 0.05))
 @
 \end{table*}
 
@@ -880,26 +1007,25 @@ in midtown Manhattan, Queens, and southern Bronx tend to lose some.
 
 <<tweets_map, echo=FALSE, message=FALSE, warning=FALSE>>=
 library(ggmap)
-map <- ggmap(get_map(unname(st_bbox(tracts_sf)), source = "stamen", maptype = "toner-lite"),
+map <- ggmap(get_map(unname(st_bbox(tracts)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
 map +
-  geom_sf(data = tracts_sf %>% 
-            mutate(diff = tweets_ls - access_ls, 
-                   pct_diff = diff / access_ls * 100), 
+  geom_sf(data = tracts %>%
+            mutate(diff = tweets_ls - access_ls,
+                   pct_diff = diff / access_ls * 100),
           inherit.aes=FALSE,
-          aes(fill = cut(pct_diff, quantile(pct_diff, 
+          aes(fill = cut(pct_diff, quantile(pct_diff,
                                             probs = seq(0, 1, by = 0.1)))),
           alpha = 0.8, color = NA) +
   scale_fill_brewer("Percent Change", palette = "PiYG")
 @
-  \caption{Percent change in relative accessibility to parks when accounting for Twitter 
+  \caption{Percent change in relative accessibility to parks when accounting for Twitter
   activity.}
   \label{fig:tweets_map}
 \end{figure*}
 
 <<tweets_models>>=
-tweets_models <- list(pa_models[[3]], pa_models[[4]], 
-                      obesity_models[[3]], obesity_models[[4]]) %>%
+tweets_models <- list(pa_models[[2]], obesity_models[[2]]) %>%
   lapply(function(model){
     update(update(model, . ~ . -access_ls + tweets_ls))
   })
@@ -918,36 +1044,32 @@ be warranted.
 
 
 <<tweets_coefs, results="asis">>=
-names(tweets_models) <- c("Physical Activity: High and Low Income", 
-                          "Physical Activity: log(Income)",
-                          "Obesity: High and Low Income", "Obesity: log(Income)")
-names(pa_models)[3:4] <- c("Physical Activity: High and Low Income", 
-                           "Physical Activity: log(Income)")
-names(obesity_models)[3:4] <- c("Obesity: High and Low Income", 
-                                "Obesity: log(Income)")
-lapply(c(tweets_models, pa_models, obesity_models), function(model){
+access_models <- list("Physical Activity" = pa_models[[2]],
+                      "Physical Activity" = tweets_models[[1]],
+                      "Obesity" = obesity_models[[2]],
+                      "Obesity" = tweets_models[[2]] )
+
+lapply(access_models, function(model){
   s <- summary(model)
   as_data_frame(s$Coef) %>%
     mutate(term = rownames(s$Coef)) %>%
-    dplyr::select(term, estimate = Estimate, std.error = `Std. Error`, 
+    dplyr::select(term, estimate = Estimate, std.error = `Std. Error`,
            statistic = `z value`, p.value = `Pr(>|z|)`)
 }) %>%
-  bind_rows(.id = "model") %>%
+  bind_rows(.id = "y") %>%
   filter(term %in% c("tweets_ls", "access_ls")) %>%
-  separate(model, c("y", "income"), ": ") %>%
-  mutate(term = ifelse(term == "tweets_ls", 
-                       "Tweets, Size and Distance", "Size and Distance")) %>%
-  arrange(desc(y), income, term) %>%
-  dplyr::select(income, term, estimate, std.error, p.value) %>%
-
+  mutate(
+    term = ifelse(term == "tweets_ls", "Tweets, Size and Distance", "Size and Distance")
+  ) %>%
+  arrange(desc(y), term) %>%
+  dplyr::select(y, term, estimate, std.error, p.value) %>%
   kable(escape = FALSE, digits = 4,
-        table.envir = "table*", booktabs = TRUE, 
+        table.envir = "table*", booktabs = TRUE,
         caption = "Estimated Relationship between Accessiblity and Outcomes",
-        col.names = c("", "Accessibility Components", "Estimate", "Std. Error",
-                      "$p$-value")) %>%
-  kable_styling() %>%
-    group_rows("y = Physical Activity", 1, 4) %>%
-    group_rows("y = Obesity", 5, 8)
+        col.names = c("Outcome Variable", "Accessibility Components", "Estimate", "Std. Error",
+                      "p-value")) %>%
+  kable_styling()
+
 @
 
 \section{Limitations and Future Research Direction}
