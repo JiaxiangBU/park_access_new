@@ -126,18 +126,19 @@ accessibility and attractiveness and Census tract-level aggregate physical
 activity participation and obesity rates in New York City, controlling for
 spatial correlation and tract-level socioeconomic characteristics.
 We find a positive relationship where the least park-accessible tracts have an
-expected physical activity participation rate half a percentage point lower than
-the most accessible tracts, though this result is only suggestive of correlation
-($p$-value $<0.1$ from a statistical) perspective.
+expected physical activity participation rate roughly a full percentage point
+lower than the most accessible tracts; a traditional quarter-mile buffer
+analysis estimates an effect twice as large but marginally less significant.
 However, we also find a strong and significant correlation between
-increased park accessibility and decreased obesity rates, again controlling for
-spatial correlation, socioeconomic attributes, and physical activity rates.
+the choice-based park accessibility metric and decreased obesity rates --- again
+controlling for spatial correlation, socioeconomic attributes, and physical
+activity rates. A traditional buffer analysis does not show significance.
 
 We also demonstrate how the choice-based accessibility metric could potentially
-be expanded to account for other elements of a park's attractiveness by
-introducing the number of geolocated tweets emanating from within each park during
-September 2014. The paper concludes with a discussion of
-opportunities for future research.
+be expanded to account for other measures of a park's attractiveness by
+introducing the number of geolocated tweets emanating from within each park
+during September 2014. The paper concludes with a discussion of opportunities
+for future research.
 
 \section{Literature Review}\label{sec:litreview}
 
@@ -662,9 +663,9 @@ equivalence, the SEM is more efficient.
 
 The researcher must assert $W$ {\em a priori}, though there are several
 common specifications \citep{Dubin1998}. In this study we specify that tracts
-with population-weighted centroids located within 1.8 Euclidean miles of each 
-other are 
-considered neighbors, and the strength of the relationship is the inverse of 
+with population-weighted centroids located within 1.8 Euclidean miles of each
+other are
+considered neighbors, and the strength of the relationship is the inverse of
 the distance between them:
 \begin{equation}\label{eq:weightsrule}
 W_{ij} = \begin{cases}
@@ -673,7 +674,7 @@ W_{ij} = \begin{cases}
   \end{cases}
 \end{equation}
 <<weights, warning = FALSE>>=
-# Instead of using the centroid of the tract geometry, we want to use the 
+# Instead of using the centroid of the tract geometry, we want to use the
 # tract's population-weighted centroid.
 pop_weighted_centroids <- tracts %>% tbl_df() %>%
   dplyr::select(geoid) %>%
@@ -699,8 +700,8 @@ trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impact
 @
 This is a similar specification to that used by  \citet{tra_autoregression_paper}
 in a study of home prices in Atlanta. We selected this specification after
-comparing overall model likelihoods between it and an adjacent (queen)
-tract specification.
+comparing overall model likelihoods between it and specification where tracts
+sharing a boundary are considered neighbors (queen-adjacent).
 
 \subsection{Accessibility}\label{subsec:accessibility}
 
@@ -709,7 +710,7 @@ minutes as a travel impedance term, and employment by sector as a size term or
 attraction component. Typically such models handle recreational trips together with
 other non-work and non-school trips, and we therefore can find no previously
 estimated coefficients using size terms relevant to park acreage or amenities.
-Given this gap in the literature, we instead assert plausible values for 
+Given this gap in the literature, we instead assert plausible values for
 $\beta$ to generate the choice-based accessibility statistic used in this study.
 
 <<f_logsums>>=
@@ -763,38 +764,36 @@ distances <- st_distance(pop_weighted_centroids, parks, byid = TRUE) %>%
 distances <- pmax(distances, 0.1)
 @
 
-The functional form of the accessibility statistic is adapted from 
-Equation \ref{eq:v_sd} by log-transforming first the distance (Euclidean, in miles) 
-between the park boundaries and population-weighted tract centroids and second the 
+The functional form of the accessibility statistic is adapted from
+Equation \ref{eq:v_sd} by log-transforming first the distance (Euclidean, in miles)
+between the park boundaries and population-weighted tract centroids and second the
 park size (in acres).
 \begin{equation}\label{eq:v_logged}
 V_{ij} = \log(size_j)\lambda_s + \log(distance_{ij})\lambda_d
 \end{equation}
-We then calculate the consumer surplus $C$  (log-sum of the exponentiated 
+We then calculate the consumer surplus $C$  (log-sum of the exponentiated
 utilities) for each tract and standardize the result,
 \begin{equation}\label{eq:v_logged}
 C_i' = \frac{C_i - \bar{\vect{C}}}{sd(\vect{C})}
 \end{equation}
 
 We initially estimated potential values of the $\lambda$ coefficients by
-applying a limited-memory, box-constrained optimization algorithm 
+applying a limited-memory, box-constrained optimization algorithm
 maximizing the model log-likehood.\footnote{Using the {\texttt nlm} function
 in R \citep{RCoreTeam2018}} The constraint required that the coefficient on
 size be positive and that on distance negative; all else equal, we assert people
 will prefer to use larger parks and parks that are nearer to their residence. This
-resulted in $\lambda_d = -1.98$  and $\lambda_s = 0.000$. Though the 
-``most likely''
-parameter value, in this case it was unsatisfactory for two reasons: first,
-our prior assertion that park size is a valuable attribute of a park, and second
-the observation that with these maximum likelihood values tracts bordering on 
-the corners of
-Central Park were measured with poor overall accessibility, a unacceptably 
-unintuitive result. We subsequently 
-adjusted the $\lambda_s$ value to $0.3$; the relative ratio of the coefficients 
-implies that all else equal, an individual would travel 6.6 times further to
-access a park twice as large.
+resulted in $\lambda_d = -1.98$  and $\lambda_s = 0.000$. Though the ``most
+likely'' parameter value, in this case it was unsatisfactory for two reasons:
+first, our prior assertion that park size is a valuable attribute of a park, and
+second the observation that with these maximum likelihood values tracts
+bordering on the corners of Central Park were measured with poor overall
+accessibility, an unacceptably unintuitive result. We subsequently adjusted the
+$\lambda_s$ value to $0.3$; the relative ratio of the coefficients implies that
+all else equal, an individual would travel 6.6 times further to access a park
+twice as large.
 
-<<logsum_betas>>=
+<<logsum_betas, warning = FALSE>>=
 # This is where we actually calculate the accessibility statistic, using the
 # distances matrix between tracts (in the rows) and parks (in the columns).
 tracts <- tracts %>%
@@ -839,12 +838,12 @@ leaflet(tracts) %>%
 @
 
 Figure \ref{fig:map} shows a map of New York City with each tract highlighted
-based on its relative accessibility score. The most continuous region of good park 
+based on its relative accessibility score. The most continuous region of good park
 access is in upper Manhattan and the Bronx, bracketed by Central Park and the
-Bronx River. Conversely, some of the poorest-accessibility areas are in 
-Brooklyn tracts not immediately adjacent to Prospect Park. Because the 
-accessibility statistic is normalized, the worst values are slightly below $-3$, 
-the best somewhere above $3$. 
+Bronx River. Conversely, some of the poorest-accessibility areas are in
+Brooklyn tracts not immediately adjacent to Prospect Park. Because the
+accessibility statistic is normalized, the worst values are slightly below $-3$,
+the best somewhere above $3$.
 
 
 \begin{figure*}
@@ -867,7 +866,7 @@ map +
 
 <<base_formula>>=
 base_formula <- formula(
-  ~ log(density) + log(income) + 
+  ~ log(density) + log(income) +
     fulltime + college + single +
     youth + young_adults + seniors + # need to leave out a category for collinearity
     black + asian + hispanic + other)
@@ -885,38 +884,36 @@ test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 
 We estimated SDM and SEM models regressing the physical activity rate against
 against the base covariates (without the accessibility logsum). A likelihood
-ratio test failed to reject that the SEM is equivalent
-($\chi^2 = \Sexpr{test_sdmsem$Chisq[2]}$ on \Sexpr{test_sdmsem$Df[2]} degrees of
-freedom), so we use the SEM specification only going forward.
-Table \ref{tab:pa_models} presents the estimated coefficients for the base
-model with income represented in two ways. In the first, the share of the tract
-population in
-the bottom three income deciles and the share of the population in the top three
-income deciles are each included as independent predictors. In the second, the
-logarithm of the mean tract income is included as a predictor.
-Notwithstanding the higher model likelihood of the deciles model, comparing
-coefficients across the models shows that the predictors change magnitude
-or significance only marginally, if at all. Overall, the base model
-predictors are significant and of intuitive direction. Tracts with higher shares
+ratio test failed to reject that the SDM is different from the SEM, so we use
+the SEM specification only going forward. Table \ref{tab:pa_models} presents the
+estimated coefficients for the base model with the socioecononomic controls and
+no representation of park accessibility. For the most part the coefficients are
+highly significant and of the expected sign. Tracts with higher shares
 of full-time workers, college-educated adults, young adults, and high-income
 households all show a greater share of individuals engaging in regular physical
 activity. Conversely, tracts with greater population density and a greater
 share of single adults, children, seniors, minorities of all types, and low
-income households all report lower rates of physical activity.
+income households all have lower modeled rates of physical activity.
 
-The other two models presented in Table \ref{tab:pa_models} include
-the log-sum accessibility statistic described in above added as a predictor. 
-In both income specifications,
-the access logsum is positively correlated with physical activity rates; all else
-equal, people in tracts with higher accessibility to parks report higher rates of
-physical activity. The estimated value of this coefficient and its standard
-error is effectively the same with both representations of income, though in the
-log representation the estimated $t$-statistic technically passes the $0.1$ level.
-This is suggestive evidence only from a statistical perspective, but it deserves
-comment. Taking a compromise value of $0.10$ between the two models, the data
-suggest going from the least-accessible ($-3.0$) to the most-accessible ($3.0$) 
-tract implies a $0.6$ percentage-point rise in physical activity rates, though
-with a wide confidence interval around that estimate. 
+To this base model we add a measure of park accessibility considered in two
+ways: a logsum-based statistic as described earlier and a more typical quarter-mile
+binary access buffer. The estimated coefficients for these models are also
+given in Table \ref{tab:pa_models}. In both accessibility specifications,
+the access measure is positively correlated with physical activity rates; all else
+equal, people in tracts with higher accessibility to parks have higher estimated
+rates of physical activity. Though the estimated coefficient on the quarter-mile
+buffer appears to have a larger absolute value than the logsum-based statistic,
+this masks a key difference in the specification worth remembering.
+The logsum allow for variation in access unavailable in the buffer-based method.
+In our dataset almost every tract
+(\Sexpr{round(sum(tracts$access_025) / nrow(tracts) * 100, 0)} \%) is within
+a quarter-mile of {\em some} kind of park, but this park may not be large enough
+to support physical activities all individuals would like to participate in.
+Because tracts with only adequate park access are grouped with tracts having
+excellent park access, the overall effect is comparatively unclear. The logsum-based
+coefficient, on the other hand, suggest going from the least-accessible ($-3.0$)
+to the most-accessible ($3.0$) tract implies roughly a $1.1$\% percentage-point
+rise in estimated physical activity rates
 
 
 <<access_sdm>>=
@@ -965,19 +962,19 @@ names(obesity_models) <- names(pa_models)
 
 <<screen_obese_models, eval = FALSE>>=
 screenreg(obesity_models, digits = 4, table = FALSE,
-          stars = c(0.001, 0.01, 0.05, 0.1) )
+          stars = c(0.001, 0.01, 0.05) )
 @
 
 We now consider the impacts of a model where the dependent variable is
 the {\em obesity} rate, and physical activity becomes an independent covariate
-alongside the controlling variables and the accessibility logsum variable. 
+alongside the controlling variables and the accessibility logsum variable.
 Table \ref{tab:obese_models} presents the estimated coefficients for both
-income specifications, with and without the accessibility logsum. As in the 
+income specifications, with and without the accessibility logsum. As in the
 physical activity models, the coefficients are largely significant and
-in the expected sign. The accessibility coefficient has practically the same 
-effect as in the physical activity model: moving from poor to excellent parks 
+in the expected sign. The accessibility coefficient has practically the same
+effect as in the physical activity model: moving from poor to excellent parks
 access lowers the changes the expected obesity rate by around half a percentage
-point. In this case, however, the parameter $p$-value is lower than the 
+point. In this case, however, the parameter $p$-value is lower than the
 conventional $0.05$ level in each income representation.
 
 
