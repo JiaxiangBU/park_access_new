@@ -46,6 +46,7 @@ clean:
 
 realclean: clean
 	@echo + Really cleaning ...
+	rm -rf cache/
 	rm -f $(MASTER)
 	rm -f $(patsubst %.pdf,%.tex,$(MASTER)) 
 
