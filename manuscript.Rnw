@@ -967,15 +967,20 @@ screenreg(obesity_models, digits = 4, table = FALSE,
 
 We now consider the impacts of a model where the dependent variable is
 the {\em obesity} rate, and physical activity becomes an independent covariate
-alongside the controlling variables and the accessibility logsum variable.
-Table \ref{tab:obese_models} presents the estimated coefficients for both
-income specifications, with and without the accessibility logsum. As in the
-physical activity models, the coefficients are largely significant and
-in the expected sign. The accessibility coefficient has practically the same
-effect as in the physical activity model: moving from poor to excellent parks
-access lowers the changes the expected obesity rate by around half a percentage
-point. In this case, however, the parameter $p$-value is lower than the
-conventional $0.05$ level in each income representation.
+alongside the controlling variables and the accessibility metric.
+Table \ref{tab:obese_models} again presents the base model without
+any accessiblity measure, and models with accessibility captured through a
+logsum and through a 1/4 mile buffer. As in the
+physical activity models, the coefficients are typically significant and
+on the expected sign, with a few exceptions: in this case an increasing hispanic
+population share  and an increasing share of children have no significant
+relationship on obesity. Unlike in the physical activity models however,
+the inference on the accessibility statistic {\em does} change between
+specifications. The 1/4 mile buffer neither substantially improves the model
+fit nor is its term significant at any threshold, but the accessibility logsum
+indicates a significant negative correlation: moving from the least to most
+accessible tract decreases the expected obesity rate by approximately half a
+percentage point.
 
 
 \begin{table*}
@@ -1001,36 +1006,35 @@ texreg(obesity_models, digits = 4, table = FALSE,
 As discussed when presenting the choice-based accessibility metric above,
 a key benefit it offers is the natural way in which park amenities beyond simply size
 can be accomodated. For example, the number of tweets emanating from a park
-might be seen as a measure of the park's popularity, or a proxy for its use. It 
+might be seen as a measure of the park's popularity, or a proxy for its use. It
 may be construed that parks with high popularity or use contain other amenities
 that encourage residents to use the park space, raising physical activity rates
 and lowering obesity rates beyond what would be expected with the park's size
 and proximity alone. It is reasonable to question whether park size and Twitter
 activity are highly correlated, and thus would result in a double-counting of
-park size in the accessibility statistic. In our 
-data the number of tweets is positively but only loosely correlated  with park 
-size in our data ($\rho = \Sexpr{round(cor(parks$log_size, parks$log_tweets), 3)}$), 
-indicating that the Twitter data in fact could provide new information or proxy for the 
-desired amenities.
+park size in the accessibility statistic. In our data the number of tweets is
+positively but only loosely correlated  with park
+size ($\rho = \Sexpr{round(cor(parks$log_size, parks$log_tweets), 3)}$),
+indicating that the Twitter data in fact could provide new information or proxy
+for the desired amenities.
 
-To test this hypothesis, we can use the twitter data described earlier
-and suggested in Equation \ref{eq:v_sdt}. In this application, we again 
+To test this hypothesis, we can use the twitter data described earlier and
+suggested in Equation \ref{eq:v_sdt}. In this application, we again
 log-transform all the components of utility:
 \begin{equation}\label{eq:v_logsdt}
 V_{ij} = \log(size_j)\lambda_s + \log(distance_{ij})\lambda_d + g(tweets_j)\lambda_t
 \end{equation}
 where $g(x)$ is a Yeo-Johnson transformation to preserve cases where $log(0)$
-would be otherwise undefined \citep{Yeo2000}. As before, there is little 
-information by which to
-determine the values of $\lambda$ in this utility specification; we use the
-previous values with the addition of $\lambda_t = 0.1$. The ratio between the 
-utility coefficients implies residents would travel almost twenty times as far or
-use a park three times smaller if it had twice the Twitter activity, all else 
-equal. 
+would be otherwise undefined \citep{Yeo2000}. As before, there is little
+information by which to determine the values of $\lambda$ in this utility
+specification; we use the previous values with the addition of $\lambda_t =
+0.1$. The ratio between the utility coefficients implies residents would travel
+almost twenty times as far or use a park three times smaller if it had twice the
+Twitter activity, all else equal.
 
 Figure \ref{fig:tweets_map} shows the percent change in the normalized log
 sum statistic after including the twitter infromation. There is not a recognizable
-overarching pattern to the changes, though tracts immediately surrounding 
+overarching pattern to the changes, though tracts immediately surrounding
 Prospect Park and Central Park gain even more relative accessibility, and tracts
 in midtown Manhattan, Queens, and southern Bronx tend to lose some.
 
@@ -1063,15 +1067,15 @@ tweets_models <- list(pa_models[[2]], obesity_models[[2]]) %>%
 @
 
 Table \ref{tab:tweets_coefs} presents the estimated coefficients relating
-accessibility to obesity and physical activity rates, with and without the 
-inclusion of Twitter data. In all four cases, including twitter information in
+accessibility to obesity and physical activity rates, with and without the
+inclusion of Twitter data. In both cases, including twitter information in
 the accessibility statistic tempers the strength of the relationship with the
 dependent variable and modestly widens the standard error without substantively
-affecting the significance of the test statistics.  
-From this limited example, we cannot say whether Twitter activity enhances the 
-ability of parks to induce physical activity rates or lower obesity rates, 
-though further investigation of this and other park amenities would certainly 
-be warranted. 
+affecting the significance of the test statistics or the interpretation.
+From this limited example, we cannot say whether Twitter activity enhances the
+ability of parks to induce physical activity rates or lower obesity rates,
+though further investigation of this and other park amenities would certainly
+be warranted.
 
 
 <<tweets_coefs, results="asis">>=
