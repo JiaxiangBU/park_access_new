@@ -9,3 +9,5 @@ manuscript.tex
 manuscript.bbl
 cache/*
 figure/*
+
+manuscript\.out
