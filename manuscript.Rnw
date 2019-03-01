@@ -42,14 +42,18 @@ controlling alternate explanations. In this paper we present a comprehensive
 measure of park accessibility drawn from random utility choice theory, which avoids
 arbitrary assertions of proximity while incorporating potentially numerous
 amenities and attributes of both the parks and the population. We apply this
-choice-based accessibility measure to Census tract-level health and
-socioeconomic data in New York City, paired with geographic parks data and
-geolocated position data collected from the Twitter API. Controlling for the
-socioeconomic variables and spatially correlated error terms, we show a positive
-and significant relationship between park access and physical activity rates, and
-a clear negative relationship between park access and obesity rates. Applying
-a more traditional analysis considering 1/4 mile acess to parks yields mixed
-results.
+choice-based accessibility measure to correlate Census tract-level obesity and
+physical activity rate estimates from the Centers for Disease Control and
+Prevention's 500 Cities project with tract-level American Community Survey
+socioeconomic data in New York City, paired with geographic parks data from New
+York City and geolocated tweet data collected from the Twitter API as a metric of
+a park's activity levels. Controlling for the socioeconomic variables and
+spatially correlated error terms, we show a positive and significant
+relationship between park access and physical activity rates, and a clear and
+significant negative relationship between park access and obesity rates.
+Applying a more traditional analysis considering 1/4 mile acess to parks yields
+mixed results and cannot accommodate features such as park size and twitter
+activity.
 \end{abstract}
 
 
@@ -153,6 +157,7 @@ of these findings are summarized in Table \ref{tab:parkbenefits}.
 For the purposes of this study, it is clear that parks and other
 vegetated areas support outdoor physical activity in ways distinct from other
 urban environments \citep{Giles-Corti2005, Wells2007}.
+
 
 \begin{table*}
   \caption{Commonly cited benefits of parks and greenspaces}
@@ -315,7 +320,7 @@ not all parks are equal, and that a large park such as Central Park in Manhattan
 may provide health and activity benefits over a much larger area than a smaller
 community square.
 
-Note that this formulation is an extension of the gravity-based accessibility
+Note that this formulation is an extension of gravity-based accessibility
 statistics, in the same way that the gravity-based trip distribution model
 is a specific case of
 a destination-choice model \citep{Daly1982}. But the extension is meaningful and
@@ -472,16 +477,17 @@ cdc500 <- lapply(cdc_urls, function(url){
 @
 
 The Centers for Disease Control and Prevention makes small-area estimates on
-key health indicators available through its 500 Cities data program \citep{CDC5002016}. The models
-are estimated on Census sociodemographic data paired with national and local
-health surveys, and have been validated at multiple geographic levels
-\citep{Wang2018, Wang2017, Zhang2015}. We use two synthetic indicators as our
-outcome variables in this study: the share of adults in a Census tract who are
-obese, and the share of adults who participate in no leisure-time physical activity.
-To improve clarity in our interpretation, we use the complement of the second variable ---
-the share of tract adults who participate in {\em some} physical activity ---
-even if the amount is not sufficient to affect overall health. Both indicators
-are estimated for the year 2016.
+key health indicators available through its 500 Cities data program \citep{CDC5002016}.
+The indicators are multilevel aggregations and imputations of BRFSS responses
+\citep{Wang2018, Wang2017}, and have been recently used to study the tract-level
+link between gentrification and urban health \citep{Gibbons2018}. We use two
+indicators as our dependent variables in this study: the share of adults
+in a Census tract who are obese, and the share of adults who participate in no
+leisure-time physical
+activity. To improve clarity in our interpretation, we use the complement of the
+second variable --- the share of tract adults who participate in {\em some}
+physical activity --- even if the amount is not sufficient to affect overall
+health. Both indicators are estimated for the year 2016.
 
 
 <<tracts>>=
