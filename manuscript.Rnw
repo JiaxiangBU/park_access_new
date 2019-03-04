@@ -51,7 +51,7 @@ a park's activity levels. Controlling for the socioeconomic variables and
 spatially correlated error terms, we show a positive and significant
 relationship between park access and physical activity rates, and a clear and
 significant negative relationship between park access and obesity rates.
-Applying a more traditional analysis considering 1/4 mile acess to parks yields
+Applying a more traditional analysis considering 1/4 mile access to parks yields
 mixed results and cannot accommodate features such as park size and twitter
 activity.
 \end{abstract}
@@ -613,7 +613,6 @@ bind_rows(tract_summary, park_summary) %>%
         caption = "Descriptive Statistics of Tract and Park Variables",
         col.names = c(" ", "Description", "Minimum", "Median (IQR)", "Maximum", "Source")) %>%
   kable_styling(latex_options = "scale_down") %>%
-  column_spec(1, width = "0.5in") %>%
   column_spec(2, width = "2in") %>%
   group_rows(paste("Tract Variables, N =", nrow(tracts)), 1, 14) %>%
   group_rows(paste("Park Variables, N =", nrow(parks)), 15, 16)
@@ -660,9 +659,9 @@ save degrees of freedom in the estimation. \citet{tra_autoregression_paper}
 illustrate a decision algorithm originally proposed by \citet{Florax2003} which uses
 a likelihood ratio test of the SDM against the restricted spatial error model (SEM):
 \begin{align}
-{\boldsymbol y} &= X{\boldsymbol \beta} + {\boldsymbol u},  {\boldsymbol u} = \lambda W {\boldsymbol u} +
+{\boldsymbol y} &= X{\boldsymbol \beta} + {\boldsymbol u},  {\boldsymbol u} = \gamma W {\boldsymbol u} +
 {\boldsymbol \epsilon} \label{eq:SEM}\\
-{\boldsymbol y} &= X{\boldsymbol \beta} + (I-\lambda W)^{-1}{\boldsymbol \epsilon}\notag
+{\boldsymbol y} &= X{\boldsymbol \beta} + (I-\gamma W)^{-1}{\boldsymbol \epsilon}\notag
 \end{align}
 If the likelihood ratio test rejects that the models are equivalent, then the SDM
 should be used because its estimates are unbiased. If the test cannot reject
@@ -671,12 +670,11 @@ equivalence, the SEM is more efficient.
 The researcher must assert $W$ {\em a priori}, though there are several
 common specifications \citep{Dubin1998}. In this study we specify that tracts
 with population-weighted centroids located within 1.8 Euclidean miles of each
-other are
-considered neighbors, and the strength of the relationship is the inverse of
-the distance between them:
+other are considered neighbors, and the strength of the relationship is the
+row-standardized (each row sums to 1) inverse of the distance between them:
 \begin{equation}\label{eq:weightsrule}
 W_{ij} = \begin{cases}
-  {\frac{1/d_{ij}} {\sum_{k=1}^n( 1/d_{ik})}} & \text{for $d_{ij} \leq 1.8$ miles}\\
+  {\frac{d_{ij}^{-1}} {\sum_{k=1}^n d_{ik}^{-1}}} & \text{for $d_{ij} \leq 1.8$ miles}\\
   0  & \text{for $d_{ij} > 1.8$ miles}
   \end{cases}
 \end{equation}
@@ -707,8 +705,8 @@ trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impact
 @
 This is a similar specification to that used by  \citet{tra_autoregression_paper}
 in a study of home prices in Atlanta. We selected this specification after
-comparing overall model likelihoods between it and specification where tracts
-sharing a boundary are considered neighbors (queen-adjacent).
+comparing overall model likelihoods between it and a specification where tracts
+sharing a boundary are considered neighbors.
 
 \subsection{Accessibility}\label{subsec:accessibility}
 
@@ -889,7 +887,7 @@ physact_base_sdm <- lagsarlm(update(base_formula, physact ~ .),
 test_sdmsem <- lmtest::lrtest(physact_base_sem, physact_base_sdm)
 @
 
-We estimated SDM and SEM models regressing the physical activity rate against
+We estimated SDM and SEM models regressing the physical activity rate
 against the base covariates (without the accessibility logsum). A likelihood
 ratio test failed to reject that the SDM is different from the SEM, so we use
 the SEM specification only going forward. Table \ref{tab:pa_models} presents the
@@ -911,7 +909,7 @@ equal, people in tracts with higher accessibility to parks have higher estimated
 rates of physical activity. Though the estimated coefficient on the quarter-mile
 buffer appears to have a larger absolute value than the logsum-based statistic,
 this masks a key difference in the specification worth further comment.
-The logsum allow for variation in access unavailable in the buffer-based method.
+The logsum allows for variation in access unavailable in the buffer-based method.
 In our dataset almost every tract
 (\Sexpr{round(sum(tracts$access_025) / nrow(tracts) * 100, 0)} \%) is within
 a quarter-mile of {\em some} kind of park, but this park may not be large enough
@@ -919,8 +917,8 @@ to support physical activities all individuals would like to participate in.
 Because tracts with only adequate park access are grouped with tracts having
 excellent park access, the overall effect is comparatively unclear. The logsum-based
 coefficient, on the other hand, suggests going from the least-accessible ($-3.0$)
-to the most-accessible ($3.0$) tract implies roughly a $1.1$\% percentage-point
-rise in estimated physical activity rates
+to the most-accessible ($3.0$) tract implies roughly a $1.1$ percentage point
+rise in estimated physical activity rates.
 
 
 <<access_sdm>>=
@@ -949,11 +947,12 @@ termnames <- c("(Intercept)", "log(density)", "$\\log($Income$)$",
                "Seniors (65+)", "Black population share",
                "Asian population share",
                "Hispanic population share", "Other Minorities",
-               "$\\lambda$", "Access logsum", "1/4 mile access")
+               "$\\gamma$: spatial correlation", "Access logsum", "1/4 mile access")
 
 texreg(pa_models, digits = 4, table = FALSE,
        booktabs = TRUE, use.packages = FALSE,
-       custom.coef.names = termnames)
+       custom.coef.names = termnames,
+       custom.note = "%stars. Standard errors in parentheses.")
 @
 \end{table*}
 
@@ -979,7 +978,7 @@ Table \ref{tab:obese_models} again presents the base model without
 any accessiblity measure, and models with accessibility captured through a
 logsum and through a 1/4 mile buffer. As in the
 physical activity models, the coefficients are typically significant and
-on the expected sign, with a few exceptions: in this case an increasing hispanic
+of the expected sign, with a few exceptions: in this case an increasing hispanic
 population share  and an increasing share of children have no significant
 relationship on obesity. Unlike in the physical activity models however,
 the inference on the accessibility statistic {\em does} change between
@@ -1001,10 +1000,11 @@ termnames <- c("(Intercept)", "log(density)", "$\\log($Income$)$",
                "Asian population share",
                "Hispanic population share", "Other Minorities",
                "Physical activity",
-               "$\\lambda$", "Access logsum", "1/4 mile access")
+               "$\\gamma$: spatial correlation", "Access logsum", "1/4 mile access")
 texreg(obesity_models, digits = 4, table = FALSE,
        booktabs = TRUE, use.packages = FALSE,
-       custom.coef.names = termnames,  stars = c(0.001, 0.01, 0.05))
+       custom.coef.names = termnames,
+       custom.note = "%stars. Standard errors in parentheses.")
 @
 \end{table*}
 
