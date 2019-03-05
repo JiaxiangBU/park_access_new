@@ -21,12 +21,12 @@
 %% Front matter =========================
 \title{Modeling the impacts of park access on health outcomes: a choice-based accessibility approach}
 
-\author{Nico Boyd\affilnum{1}, Gregory S. Macfarlane\affilnum{2},
-John E. Taylor\affilnum{1}, and Kari Watkins\affilnum{1}}
+\author{Gregory S. Macfarlane\affilnum{1}, Nico Boyd\affilnum{2},
+John E. Taylor\affilnum{2}, and Kari Watkins\affilnum{2}}
 \runninghead{Boyd, et al.}
 
-\affiliation{\affilnum{1}School of Civil and Environmental Engineering, Georgia Institute of Technology\\
-\affilnum{2}Civil and Environmental Engineering Department, Brigham Young University}
+\affiliation{\affilnum{1}Civil and Environmental Engineering Department, Brigham Young University\\
+\affilnum{2}School of Civil and Environmental Engineering, Georgia Institute of Technology}
 
 \corrauth{Gregory Macfarlane\\
 430 Engineering Building\\
