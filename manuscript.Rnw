@@ -19,10 +19,10 @@
 
 
 %% Front matter =========================
-\title{The impacts of park access on health outcomes: A spatial comprehensive approach}
+\title{Modeling the impacts of park access on health outcomes: a choice-based accessibility approach}
 
 \author{Nico Boyd\affilnum{1}, Gregory S. Macfarlane\affilnum{2},
-John Taylor\affilnum{1}, and Kari Watkins\affilnum{1}}
+John E. Taylor\affilnum{1}, and Kari Watkins\affilnum{1}}
 \runninghead{Boyd, et al.}
 
 \affiliation{\affilnum{1}School of Civil and Environmental Engineering, Georgia Institute of Technology\\
@@ -107,7 +107,7 @@ century.
 Historically, most large-scale health promotion efforts focused on
 individual-level interventions intended to educate people about healthy
 lifestyles and behaviors, touching on topics including diet and exercise.
-According to \citet{Duhl1999} however, the field of public health has
+However, \citet{Duhl1999} claim the field of public health has
 moved toward a new paradigm that is grounded in a social model of health,
 treating health ``as an outcome of the effects of socioeconomic status, culture,
 environmental conditions, housing, employment and community influences.'' (p. 7)
@@ -136,7 +136,7 @@ spatial correlation and tract-level socioeconomic characteristics.
 We find a positive relationship where the least park-accessible tracts have an
 expected physical activity participation rate roughly a full percentage point
 lower than the most accessible tracts; a traditional quarter-mile buffer
-analysis estimates an similar albeit marginally less significant effect.
+analysis estimates a similar albeit marginally less significant effect.
 However, we also find a strong and significant correlation between
 the choice-based park accessibility metric and decreased obesity rates --- again
 controlling for spatial correlation, socioeconomic attributes, and physical
@@ -326,7 +326,7 @@ is a specific case of
 a destination-choice model \citep{Daly1982}. But the extension is meaningful and
 allows us to consider more attributes of the park or the individual beyond size
 and impedance. For example, we can aggregate the number of tweets emanating from
-a park as a measure of the park's attractiveness beyond its size, and the
+a park as a measure of the park's attractiveness beyond its size. The
 utility for the choice maker from Equation \ref{eq:v_sd} then becomes
 \begin{equation}\label{eq:v_sdt}
 V_{ij} = size_j\lambda_s + distance_{ij}\lambda_d + tweets_j\lambda_t
@@ -343,13 +343,13 @@ a regional travel demand model is available to the analysts, thus making
 calibrated and multimodal logsums readily available \citep{Geurs2010}.
 
 \section{Empirical Application}
-In this section, we describe an experiment with data for New York City, where
+In this section, we develop a model with data for New York City, where
 we compute a holistic logsum-based accessibility to parks measure and model the
 relationship between this measure and physical activity rates, controlling for
 spatial effects and socioeconomic factors. We subsequently model the effect
 of the accessibility metric on obesity rates, accounting for physical activity and
-the other controls. We then model the relationship between a modified logsum
-considering geolocated Twitter data and physical activity and obesity rates.
+the other controls. Finally, we model the relationship between a modified logsum
+measure considering geolocated Twitter data and physical activity and obesity rates.
 
 \subsection{Data}
 
@@ -533,9 +533,13 @@ are themselves delineated green spaces. We elect to retain these independent
 features as they may generate additional physical activity participation aside
 from the containing park. Additionally, large cemeteries are not considered
 open space in these data, though people may use the space for physical activities
-such as walking or running. For each park we calculate its size in acres, and
-identify the number of geolocated tweets emanating from the park in September
-2014, as a proxy for the park's use or popularity.
+such as walking or running. For each park we calculate its size in acres. As a
+proxy for the park's use or popularity, we add a measure of Twitter activity. Using
+a Twitter application programming interface (API) implemented with the Python
+package Tweepy, we collected and stored tweets containing geotags of the exact
+geographic coordinates \citep{Wang2016}.  From this information, we were
+able to segregate tweets that were generated within a park in September 2014.
+
 
 <<tractsdata, results="asis", message=FALSE, warning=FALSE, cache=FALSE>>=
 # This is an index pairing the variable names with the order we want them
@@ -1182,8 +1186,10 @@ attempt to improve the quality of life of urban residents in the future.
 
 Increased physical activity and decreased obesity rates are critical measures of
 improvement in public health. Although many have theorized the link between park
-accessibility and these metrics, previous literature has been mixed. Using New
-York City as a case study, we presented a holistic and flexible measurement for
+accessibility and these metrics, previous literature has produced mixed
+findings, perhaps owing to the range of variables modeled and the coarse spatial
+scale of the analyses. Using New York City as a case study, we presented a
+holistic and flexible measurement for
 park accessibility that compares the continuous distance to all parks in the
 region, weighted against the size of the park and its other amenities. In terms
 of physical activity, we found a positive relationship where the least
@@ -1200,9 +1206,12 @@ perhaps because of the widespread availability of GIS software. In spite of thei
 widespread use, they are relatively limited in terms of both their theoretical
 underpinnings and their flexibility to accommodate attributes of parks beyond
 their proximity. And even proximity may not be adequately handled, as the buffer
-distance may be arbitrarily asserted by the researcher. Adopting choice-based
-accessibilities of the kind used in this study will allow researchers to
-encompass the full universe of park amenities in their accessibility analyses.
+distance may be arbitrarily asserted by the researcher. The model we develop and
+apply in this paper extends buffer driven models to contribute a more
+comprehensive and flexible approach for measuring the impact of park access on
+health outcomes. Adopting choice-based accessibilities of the kind used in this
+study will allow researchers to
+encompass the full range of park amenities in their accessibility analyses.
 This will in turn enable planners to consider how multiple attributes of a park
 --- from its location to its size to its amenities and beyond --- benefit the health
 of the community the park serves.
