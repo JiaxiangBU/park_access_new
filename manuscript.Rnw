@@ -50,10 +50,11 @@ York City and geolocated tweet data collected from the Twitter API as a metric o
 a park's activity levels. Controlling for the socioeconomic variables and
 spatially correlated error terms, we show a positive and significant
 relationship between park access and physical activity rates, and a clear and
-significant negative relationship between park access and obesity rates.
-Applying a more traditional analysis considering 1/4 mile access to parks yields
-mixed results and cannot accommodate features such as park size and twitter
-activity.
+significant negative relationship between park access and obesity rates. In
+doing so, this research contributes a new, more comprehensive modeling approach
+for measuring the impact of park access on health, and may improve our
+understanding of the role  parks can serve in furthering public health
+objectives.
 \end{abstract}
 
 
