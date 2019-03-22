@@ -23,16 +23,15 @@
 
 \author{Gregory S. Macfarlane\affilnum{1}, Nico Boyd\affilnum{2},
 John E. Taylor\affilnum{2}, and Kari Watkins\affilnum{2}}
-\runninghead{Boyd, et al.}
+\runninghead{Modeling health outcomes via choice-based accessibility to parks}
 
 \affiliation{\affilnum{1}Civil and Environmental Engineering Department, Brigham Young University\\
-\affilnum{2}School of Civil and Environmental Engineering, Georgia Institute of Technology}
+\affilnum{2}Fehr \& Peers, Los Angeles, California\\
+\affilnum{3}School of Civil and Environmental Engineering, Georgia Institute of Technology}
 
-\corrauth{Gregory Macfarlane\\
-430 Engineering Building\\
-Brigham Young University\\
-Provo, UT 84602\\
-USA}
+\corrauth{Gregory Macfarlane: 430 Engineering Building, Provo, UT 84602 USA}
+\email{gregmacfarlane@byu.edu}
+
 \begin{abstract}
 Recent research has underscored the potential for public green spaces to
 influence individual and societal health outcomes, but
@@ -56,6 +55,8 @@ for measuring the impact of park access on health, and may improve our
 understanding of the role  parks can serve in furthering public health
 objectives.
 \end{abstract}
+
+\keywords{accessibility, spatial modelling, green space}
 
 
 \maketitle
@@ -858,7 +859,7 @@ the best somewhere above $3$.
 
 \begin{figure*}
 
-<<map, echo=FALSE, message=FALSE, warning=FALSE>>=
+<<map, echo=FALSE, message=FALSE, warning=FALSE, dev = 'tikz', fig.height=4>>=
 library(ggmap)
 map <- ggmap(get_map(unname(st_bbox(tracts)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
@@ -868,7 +869,7 @@ map +
           alpha = 0.8, color = NA) +
   scale_fill_brewer("Normalized Log-sum", palette = "GnBu")
 @
-  \caption{Normalized choice-based park accessibility log-sum values in New York City}
+  \caption{Normalized choice-based park accessibility log-sum values in New York City.}
   \label{fig:map}
 \end{figure*}
 
@@ -1052,7 +1053,7 @@ in midtown Manhattan, Queens, and southern Bronx tend to lose some.
 
 \begin{figure*}
 
-<<tweets_map, echo=FALSE, message=FALSE, warning=FALSE>>=
+<<tweets_map, echo=FALSE, message=FALSE, warning=FALSE, dev = 'tikz', fig.height=4>>=
 library(ggmap)
 map <- ggmap(get_map(unname(st_bbox(tracts)), source = "stamen", maptype = "toner-lite"),
              extent = "device")
