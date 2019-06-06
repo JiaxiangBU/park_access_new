@@ -1,5 +1,4 @@
-\documentclass[Crown,sageh,times]{sagej}
-\def\journalname{Submitted to Environment and Planning B: Urban Analytics and City Science}
+\documentclass[12]{article}
 
 \usepackage{amsmath}
      \def\Var{{\rm Var}\,}
@@ -10,27 +9,23 @@
 \newcommand{\?}{\overset{?}{=}}
 
 \usepackage{url}
+\usepackage{natbib}
 \usepackage{array}
 \usepackage{pdflscape}
 \usepackage{makecell}
-
-
-\begin{document}
+\usepackage{fullpage}
+\usepackage{booktabs}
 
 
 %% Front matter =========================
-\title{Modeling the impacts of park access on health outcomes: a choice-based accessibility approach}
+\title{Modeling the impacts of park access on health outcomes: a choice-based 
+accessibility approach}
 
-\author{Gregory S. Macfarlane\affilnum{1}, Nico Boyd\affilnum{2},
-John E. Taylor\affilnum{2}, and Kari Watkins\affilnum{2}}
-\runninghead{Modeling health outcomes via choice-based accessibility to parks}
+\author{Gregory S. Macfarlane, Nico Boyd, John E. Taylor, and Kari Watkins}
 
-\affiliation{\affilnum{1}Civil and Environmental Engineering Department, Brigham Young University\\
-\affilnum{2}Fehr \& Peers, Los Angeles, California\\
-\affilnum{3}School of Civil and Environmental Engineering, Georgia Institute of Technology}
 
-\corrauth{Gregory Macfarlane: 430 Engineering Building, Provo, UT 84602 USA}
-\email{gregmacfarlane@byu.edu}
+\begin{document}
+\maketitle
 
 \begin{abstract}
 Recent research has underscored the potential for public green spaces to
@@ -56,10 +51,8 @@ understanding of the role  parks can serve in furthering public health
 objectives.
 \end{abstract}
 
-\keywords{accessibility, spatial modelling, green space}
 
 
-\maketitle
 <<setup, cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE>>=
 library(tidyverse)
 library(geojsonio)
@@ -101,7 +94,8 @@ While a moderate amount of regular physical activity has been established as an
 effective strategy for reducing and managing obesity and many of the
 aforementioned chronic diseases \citep{CDC2009, Durstine2013},
 \citet{Wolf2008} observed that a large portion of U.S. adults do not participate
-in sufficient physical activity, a problem compounded by age and socioeconomic status. As the epidemiological transition from
+in sufficient physical activity, a problem compounded by age and socioeconomic 
+status. As the epidemiological transition from
 infectious to chronic diseases is now complete in the developed world,
 increasing physical activity has become a vital public health task in the 21st
 century.
@@ -1218,9 +1212,8 @@ This will in turn enable planners to consider how multiple attributes of a park
 --- from its location to its size to its amenities and beyond --- benefit the health
 of the community the park serves.
 
-\begin{funding}
+\subsection*{Acknowledgements}
 This project was funded by the Speedwell Foundation.
-\end{funding}
 
 \bibliographystyle{SageH}
 \bibliography{citations}
