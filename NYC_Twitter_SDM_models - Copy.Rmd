@@ -26,8 +26,8 @@ should read it in twice because the sf library is better for visualization but
 spdep still requires sp objects for now.
 
 ```{r read_tracts}
-tracts <- geojson_read("nyc_tracts.geojson", what = "sp")
-tracts_sf <- st_read("nyc_tracts.geojson", quiet = TRUE) %>%
+tracts <- geojson_read("data/nyc_tracts.geojson", what = "sp")
+tracts_sf <- st_read("data/nyc_tracts.geojson", quiet = TRUE) %>%
   st_transform(4326)
 ```
 
@@ -75,8 +75,8 @@ The parks data seems relatively complete, with the exception of a few variables
 that are missing everywhere. But we'll ignore this for now.
 
 ```{r read_parks, echo=FALSE}
-parks <- geojson_read("nyc_parks.geojson", what = "sp")
-parks_sf <- st_read("nyc_parks.geojson") %>%
+parks <- geojson_read("data/nyc_parks.geojson", what = "sp")
+parks_sf <- st_read("data/nyc_parks.geojson") %>%
   st_transform(4326)
 #plot(parks)
 ```
@@ -278,6 +278,7 @@ parks_formula_5 <- update(base_formula, . ~ . + park_ls5 )
 First, let's estimate the base model as an LM, SDM, and SEM model
 
 ```{r basemodels}
+# Time consuming.
 obese_base_lm <- lm(update(base_formula, OBESITY ~ .), data = tracts@data)
 obese_base_sar <- lagsarlm(update(base_formula, OBESITY ~ .), 
                            data = tracts@data, listw = W, zero.policy = TRUE)
@@ -297,6 +298,7 @@ lmtest::lrtest(obese_base_sem, obese_base_sdm)
 
 
 ```{r obesity, echo=FALSE, message=FALSE, warning=FALSE}
+# Time consuming.
 obese_ls1_sdm <- lagsarlm(update(parks_formula_1, OBESITY ~ .), 
                           data = tracts@data,  listw = W, zero.policy = TRUE, type = "mixed")
 obese_ls2_sdm <- lagsarlm(update(parks_formula_2, OBESITY ~ .), 
@@ -358,14 +360,13 @@ obesity_models %>%
     output = paste(round(impact, 5), 
                    gtools::stars.pval(`p-val`))
   ) %>%
-  spread(model, output) %>% View
+  spread(model, output)
 
 ```
 
-# Estimate Physical Activity Models
+<!-- # Estimate Physical Activity Models -->
 
-
-```{r phy, echo=FALSE, message=FALSE, warning=FALSE}
+```{r phy, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 physact_base_sdm <- lagsarlm(update(base_formula, Phys_Act ~ .), 
                              data = tracts@data,  listw = W, zero.policy = TRUE, 
                              type = "mixed")
@@ -387,7 +388,7 @@ physact_models <- list(physact_base_sdm, physact_ls1_sdm, physact_ls2_sdm,
 names(physact_models) <- c("Base", ls_names)
 ```
 
-```{r physact_impacts}
+```{r physact_impacts, eval=FALSE, include=FALSE}
 physact_models %>%
   lapply(impacts_extractor) %>%
   bind_rows(.id = "model") %>%
