@@ -22,7 +22,7 @@ library(VGAM)
 ```
 
 
-```{r W, echo=FALSE}
+```{r W}
 # tracts %>% class
 # neighbors <- poly2nb(tracts, queen = TRUE)
 # neighbors %>% write_rds("../output/neighbors.rds")

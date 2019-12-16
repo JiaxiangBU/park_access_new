@@ -19,7 +19,20 @@ library(sf)
 library(VGAM)
 ```
 
+``` r
+# tracts %>% class
+# neighbors <- poly2nb(tracts, queen = TRUE)
+# neighbors %>% write_rds("../output/neighbors.rds")
+neighbors <- read_rds("../output/neighbors.rds")
+neighbors %>% class
+```
+
     ## [1] "nb"
+
+``` r
+W <- nb2listw(neighbours = neighbors, zero.policy = TRUE)
+print(W, zero.policy = TRUE)
+```
 
     ## Characteristics of weights list object:
     ## Neighbour list object:
@@ -35,14 +48,69 @@ library(VGAM)
     ##      n      nn   S0       S1       S2
     ## W 2099 4405801 2099 738.2911 8573.701
 
+``` r
+trMC <- trW(as(W, "CsparseMatrix"), type="MC") # trace used in montecarlo impacts
+```
+
     ## Warning: Function trW moved to the spatialreg package
 
-    ## Warning in trW(as(W, "CsparseMatrix"), type = "MC"): install the spatialreg
-    ## package
-
-    ## Warning: Function as_dgRMatrix_listw moved to the spatialreg package
-
-    ## Warning in as_dgRMatrix_listw(from): install the spatialreg package
+    ## Registered S3 methods overwritten by 'spatialreg':
+    ##   method                   from 
+    ##   residuals.stsls          spdep
+    ##   deviance.stsls           spdep
+    ##   coef.stsls               spdep
+    ##   print.stsls              spdep
+    ##   summary.stsls            spdep
+    ##   print.summary.stsls      spdep
+    ##   residuals.gmsar          spdep
+    ##   deviance.gmsar           spdep
+    ##   coef.gmsar               spdep
+    ##   fitted.gmsar             spdep
+    ##   print.gmsar              spdep
+    ##   summary.gmsar            spdep
+    ##   print.summary.gmsar      spdep
+    ##   print.lagmess            spdep
+    ##   summary.lagmess          spdep
+    ##   print.summary.lagmess    spdep
+    ##   residuals.lagmess        spdep
+    ##   deviance.lagmess         spdep
+    ##   coef.lagmess             spdep
+    ##   fitted.lagmess           spdep
+    ##   logLik.lagmess           spdep
+    ##   fitted.SFResult          spdep
+    ##   print.SFResult           spdep
+    ##   fitted.ME_res            spdep
+    ##   print.ME_res             spdep
+    ##   print.lagImpact          spdep
+    ##   plot.lagImpact           spdep
+    ##   summary.lagImpact        spdep
+    ##   HPDinterval.lagImpact    spdep
+    ##   print.summary.lagImpact  spdep
+    ##   print.sarlm              spdep
+    ##   summary.sarlm            spdep
+    ##   residuals.sarlm          spdep
+    ##   deviance.sarlm           spdep
+    ##   coef.sarlm               spdep
+    ##   vcov.sarlm               spdep
+    ##   fitted.sarlm             spdep
+    ##   logLik.sarlm             spdep
+    ##   anova.sarlm              spdep
+    ##   predict.sarlm            spdep
+    ##   print.summary.sarlm      spdep
+    ##   print.sarlm.pred         spdep
+    ##   as.data.frame.sarlm.pred spdep
+    ##   residuals.spautolm       spdep
+    ##   deviance.spautolm        spdep
+    ##   coef.spautolm            spdep
+    ##   fitted.spautolm          spdep
+    ##   print.spautolm           spdep
+    ##   summary.spautolm         spdep
+    ##   logLik.spautolm          spdep
+    ##   print.summary.spautolm   spdep
+    ##   print.WXImpact           spdep
+    ##   summary.WXImpact         spdep
+    ##   print.summary.WXImpact   spdep
+    ##   predict.SLX              spdep
 
 First, let’s estimate the base model as an LM, SDM, and SEM model
 
@@ -78,168 +146,12 @@ obese_base_sar <- lagsarlm(update(base_formula, OBESITY ~ .),
 
     ## Warning: Function lagsarlm moved to the spatialreg package
 
-    ## Warning in lagsarlm(update(base_formula, OBESITY ~ .), data = data, listw =
-    ## W, : install the spatialreg package
-
-    ## Warning: Function can.be.simmed moved to the spatialreg package
-
-    ## Warning in can.be.simmed(listw): install the spatialreg package
-
-    ## Warning: Function jacobianSetup moved to the spatialreg package
-
-    ## Warning in jacobianSetup(method, env, con, pre_eig = con$pre_eig, trs =
-    ## trs, : install the spatialreg package
-
-    ## Warning: Function eigen_setup moved to the spatialreg package
-
-    ## Warning in eigen_setup(env, which = which): install the spatialreg package
-
-    ## Warning: Function as_dgRMatrix_listw moved to the spatialreg package
-
-    ## Warning in as_dgRMatrix_listw(from): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
 ``` r
 obese_base_sem <- errorsarlm(update(base_formula, OBESITY ~ .), 
                              data = data, listw = W, zero.policy = TRUE)
 ```
 
     ## Warning: Function errorsarlm moved to the spatialreg package
-
-    ## Warning in errorsarlm(update(base_formula, OBESITY ~ .), data = data, listw
-    ## = W, : install the spatialreg package
-
-    ## Warning: Function can.be.simmed moved to the spatialreg package
-
-    ## Warning in can.be.simmed(listw): install the spatialreg package
-
-    ## Warning: Function jacobianSetup moved to the spatialreg package
-
-    ## Warning in jacobianSetup(method, env, con, pre_eig = con$pre_eig, trs =
-    ## trs, : install the spatialreg package
-
-    ## Warning: Function eigen_setup moved to the spatialreg package
-
-    ## Warning in eigen_setup(env, which = which): install the spatialreg package
-
-    ## Warning: Function as_dgRMatrix_listw moved to the spatialreg package
-
-    ## Warning in as_dgRMatrix_listw(from): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(lambda, env): install the spatialreg package
 
 ``` r
 obese_base_sdm <- lagsarlm(update(base_formula, OBESITY ~ .), 
@@ -249,87 +161,6 @@ obese_base_sdm <- lagsarlm(update(base_formula, OBESITY ~ .),
 
     ## Warning: Function lagsarlm moved to the spatialreg package
 
-    ## Warning in lagsarlm(update(base_formula, OBESITY ~ .), data = data, listw =
-    ## W, : install the spatialreg package
-
-    ## Warning: Function can.be.simmed moved to the spatialreg package
-
-    ## Warning in can.be.simmed(listw): install the spatialreg package
-
-    ## Warning: Function create_WX moved to the spatialreg package
-
-    ## Warning in create_WX(x, listw, zero.policy = zero.policy, prefix = prefix):
-    ## install the spatialreg package
-
-    ## Warning: Function jacobianSetup moved to the spatialreg package
-
-    ## Warning in jacobianSetup(method, env, con, pre_eig = con$pre_eig, trs =
-    ## trs, : install the spatialreg package
-
-    ## Warning: Function eigen_setup moved to the spatialreg package
-
-    ## Warning in eigen_setup(env, which = which): install the spatialreg package
-
-    ## Warning: Function as_dgRMatrix_listw moved to the spatialreg package
-
-    ## Warning in as_dgRMatrix_listw(from): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
-    ## Warning: Function do_ldet moved to the spatialreg package
-
-    ## Warning in do_ldet(rho, env): install the spatialreg package
-
 A likelihood ratio test reveals that the SEM is not preferred, so we use
 the SDM only going forward.
 
@@ -337,38 +168,12 @@ the SDM only going forward.
 lmtest::lrtest(obese_base_sem, obese_base_sdm)
 ```
 
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(x, ...): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(x, ...): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(X[[i]], ...): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(X[[i]], ...): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
     ## Likelihood ratio test
     ## 
-    ## Model 1: OBESITY ~ log(Pop_Density) + FulltimeWork + CollegeDeg + Single_Percent + 
-    ##     Pct0to17 + Pct18to29 + Pct65plus + PctBlack + PctAsian + 
-    ##     PctOther + PctHispanic
-    ## Model 2: OBESITY ~ log(Pop_Density) + FulltimeWork + CollegeDeg + Single_Percent + 
-    ##     Pct0to17 + Pct18to29 + Pct65plus + PctBlack + PctAsian + 
-    ##     PctOther + PctHispanic
+    ## Model 1: function (x, ...) 
+    ## UseMethod("formula")
+    ## Model 2: function (x, ...) 
+    ## UseMethod("formula")
     ##   #Df  LogLik Df  Chisq Pr(>Chisq)    
     ## 1  14 -4034.9                         
     ## 2  25 -4009.1 11 51.634  3.175e-07 ***
@@ -382,186 +187,6 @@ variable with a different combination of parameters:
 ``` r
 screenreg(obesity_models)
 ```
-
-    ## Warning: Method summary.sarlm moved to the spatialreg package
-
-    ## Warning in summary.sarlm(model, ...): install the spatialreg package
-
-    ## Warning: Method Wald1.sarlm moved to the spatialreg package
-
-    ## Warning in Wald1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method LR1.sarlm moved to the spatialreg package
-
-    ## Warning in LR1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method summary.sarlm moved to the spatialreg package
-
-    ## Warning in summary.sarlm(model, ...): install the spatialreg package
-
-    ## Warning: Method Wald1.sarlm moved to the spatialreg package
-
-    ## Warning in Wald1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method LR1.sarlm moved to the spatialreg package
-
-    ## Warning in LR1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method summary.sarlm moved to the spatialreg package
-
-    ## Warning in summary.sarlm(model, ...): install the spatialreg package
-
-    ## Warning: Method Wald1.sarlm moved to the spatialreg package
-
-    ## Warning in Wald1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method LR1.sarlm moved to the spatialreg package
-
-    ## Warning in LR1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method summary.sarlm moved to the spatialreg package
-
-    ## Warning in summary.sarlm(model, ...): install the spatialreg package
-
-    ## Warning: Method Wald1.sarlm moved to the spatialreg package
-
-    ## Warning in Wald1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method LR1.sarlm moved to the spatialreg package
-
-    ## Warning in LR1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method summary.sarlm moved to the spatialreg package
-
-    ## Warning in summary.sarlm(model, ...): install the spatialreg package
-
-    ## Warning: Method Wald1.sarlm moved to the spatialreg package
-
-    ## Warning in Wald1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method LR1.sarlm moved to the spatialreg package
-
-    ## Warning in LR1.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(object): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
 
     ## 
     ## ==================================================================================================
@@ -655,23 +280,15 @@ obesity_models
 ```
 
     ## $Base
-
-    ## Warning: Method print.sarlm moved to the spatialreg package
-
-    ## Warning in print.sarlm(x): install the spatialreg package
-
     ## 
     ## Call:
-    ## lagsarlm(formula = update(base_formula, OBESITY ~ .), data = data, 
-    ##     listw = W, type = "mixed", zero.policy = TRUE)
+    ## spatialreg::lagsarlm(formula = formula, data = data, listw = listw, 
+    ##     na.action = na.action, Durbin = Durbin, type = type, method = method, 
+    ##     quiet = quiet, zero.policy = zero.policy, interval = interval, 
+    ##     tol.solve = tol.solve, trs = trs, control = control)
     ## Type: mixed 
     ## 
     ## Coefficients:
-
-    ## Warning: Method coef.sarlm moved to the spatialreg package
-
-    ## Warning in coef.sarlm(x): install the spatialreg package
-
     ##                  rho          (Intercept)     log(Pop_Density) 
     ##         0.6554583386        19.2889572919         0.2031122246 
     ##         FulltimeWork           CollegeDeg       Single_Percent 
@@ -687,37 +304,20 @@ obesity_models
     ##        lag.Pct18to29        lag.Pct65plus         lag.PctBlack 
     ##        -0.0577753977        -0.0856822389        -0.0530527973 
     ##         lag.PctAsian         lag.PctOther      lag.PctHispanic 
-    ##        -0.0015842098         0.0001383207        -0.0227248613
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(x): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
+    ##        -0.0015842098         0.0001383207        -0.0227248613 
     ## 
     ## Log likelihood: -4009.067 
     ## 
     ## $`Short, no tweets`
-
-    ## Warning: Method print.sarlm moved to the spatialreg package
-
-    ## Warning in print.sarlm(x): install the spatialreg package
-
     ## 
     ## Call:
-    ## lagsarlm(formula = update(parks_formula_1, OBESITY ~ .), data = data, 
-    ##     listw = W, type = "mixed", zero.policy = TRUE)
+    ## spatialreg::lagsarlm(formula = formula, data = data, listw = listw, 
+    ##     na.action = na.action, Durbin = Durbin, type = type, method = method, 
+    ##     quiet = quiet, zero.policy = zero.policy, interval = interval, 
+    ##     tol.solve = tol.solve, trs = trs, control = control)
     ## Type: mixed 
     ## 
     ## Coefficients:
-
-    ## Warning: Method coef.sarlm moved to the spatialreg package
-
-    ## Warning in coef.sarlm(x): install the spatialreg package
-
     ##                  rho          (Intercept)     log(Pop_Density) 
     ##         0.6407314650        19.5057141686         0.2131392130 
     ##         FulltimeWork           CollegeDeg       Single_Percent 
@@ -735,37 +335,20 @@ obesity_models
     ##         lag.PctBlack         lag.PctAsian         lag.PctOther 
     ##        -0.0514300235         0.0002045054         0.0006934537 
     ##      lag.PctHispanic         lag.park_ls1 
-    ##        -0.0202565275        -0.3792594028
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(x): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
+    ##        -0.0202565275        -0.3792594028 
     ## 
     ## Log likelihood: -3999.501 
     ## 
     ## $`Short, tweets`
-
-    ## Warning: Method print.sarlm moved to the spatialreg package
-
-    ## Warning in print.sarlm(x): install the spatialreg package
-
     ## 
     ## Call:
-    ## lagsarlm(formula = update(parks_formula_2, OBESITY ~ .), data = data, 
-    ##     listw = W, type = "mixed", zero.policy = TRUE)
+    ## spatialreg::lagsarlm(formula = formula, data = data, listw = listw, 
+    ##     na.action = na.action, Durbin = Durbin, type = type, method = method, 
+    ##     quiet = quiet, zero.policy = zero.policy, interval = interval, 
+    ##     tol.solve = tol.solve, trs = trs, control = control)
     ## Type: mixed 
     ## 
     ## Coefficients:
-
-    ## Warning: Method coef.sarlm moved to the spatialreg package
-
-    ## Warning in coef.sarlm(x): install the spatialreg package
-
     ##                  rho          (Intercept)     log(Pop_Density) 
     ##         0.6548281441        19.6162049673         0.1886102228 
     ##         FulltimeWork           CollegeDeg       Single_Percent 
@@ -783,37 +366,20 @@ obesity_models
     ##         lag.PctBlack         lag.PctAsian         lag.PctOther 
     ##        -0.0519264912        -0.0029031311        -0.0006310116 
     ##      lag.PctHispanic         lag.park_ls2 
-    ##        -0.0236945989         0.0824512393
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(x): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
+    ##        -0.0236945989         0.0824512393 
     ## 
     ## Log likelihood: -4004.958 
     ## 
     ## $`Long, no tweets`
-
-    ## Warning: Method print.sarlm moved to the spatialreg package
-
-    ## Warning in print.sarlm(x): install the spatialreg package
-
     ## 
     ## Call:
-    ## lagsarlm(formula = update(parks_formula_4, OBESITY ~ .), data = data, 
-    ##     listw = W, type = "mixed", zero.policy = TRUE)
+    ## spatialreg::lagsarlm(formula = formula, data = data, listw = listw, 
+    ##     na.action = na.action, Durbin = Durbin, type = type, method = method, 
+    ##     quiet = quiet, zero.policy = zero.policy, interval = interval, 
+    ##     tol.solve = tol.solve, trs = trs, control = control)
     ## Type: mixed 
     ## 
     ## Coefficients:
-
-    ## Warning: Method coef.sarlm moved to the spatialreg package
-
-    ## Warning in coef.sarlm(x): install the spatialreg package
-
     ##                  rho          (Intercept)     log(Pop_Density) 
     ##          0.648145597         19.078768531          0.209819276 
     ##         FulltimeWork           CollegeDeg       Single_Percent 
@@ -831,37 +397,20 @@ obesity_models
     ##         lag.PctBlack         lag.PctAsian         lag.PctOther 
     ##         -0.052750242         -0.001564359         -0.000128001 
     ##      lag.PctHispanic         lag.park_ls4 
-    ##         -0.021510680         -0.056510711
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(x): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
+    ##         -0.021510680         -0.056510711 
     ## 
     ## Log likelihood: -4005.254 
     ## 
     ## $`Long, tweets`
-
-    ## Warning: Method print.sarlm moved to the spatialreg package
-
-    ## Warning in print.sarlm(x): install the spatialreg package
-
     ## 
     ## Call:
-    ## lagsarlm(formula = update(parks_formula_5, OBESITY ~ .), data = data, 
-    ##     listw = W, type = "mixed", zero.policy = TRUE)
+    ## spatialreg::lagsarlm(formula = formula, data = data, listw = listw, 
+    ##     na.action = na.action, Durbin = Durbin, type = type, method = method, 
+    ##     quiet = quiet, zero.policy = zero.policy, interval = interval, 
+    ##     tol.solve = tol.solve, trs = trs, control = control)
     ## Type: mixed 
     ## 
     ## Coefficients:
-
-    ## Warning: Method coef.sarlm moved to the spatialreg package
-
-    ## Warning in coef.sarlm(x): install the spatialreg package
-
     ##                  rho          (Intercept)     log(Pop_Density) 
     ##         0.6571241390        19.2692649876         0.1943455221 
     ##         FulltimeWork           CollegeDeg       Single_Percent 
@@ -879,16 +428,7 @@ obesity_models
     ##         lag.PctBlack         lag.PctAsian         lag.PctOther 
     ##        -0.0531102131        -0.0015208407        -0.0002107148 
     ##      lag.PctHispanic         lag.park_ls5 
-    ##        -0.0227150108         0.0414808295
-
-    ## Warning: Method logLik.sarlm moved to the spatialreg package
-
-    ## Warning in logLik.sarlm(x): install the spatialreg package
-
-    ## Warning: Method residuals.sarlm moved to the spatialreg package
-
-    ## Warning in residuals.sarlm(object): install the spatialreg package
-
+    ##        -0.0227150108         0.0414808295 
     ## 
     ## Log likelihood: -4008.243
 
@@ -916,93 +456,28 @@ obesity_models %>%
 ```
 
     ## Warning: Method impacts.sarlm moved to the spatialreg package
-
-    ## Warning in impacts.sarlm(sdm, tr = trMC, R = 1000): install the spatialreg
-    ## package
-
-    ## Warning: Function intImpacts moved to the spatialreg package
-
-    ## Warning in intImpacts(rho = rho, beta = beta, P = P, n = n, mu = mu, Sigma
-    ## = Sigma, : install the spatialreg package
-
-    ## Warning: Method summary.lagImpact moved to the spatialreg package
-
-    ## Warning in summary.lagImpact(impacts(sdm, tr = trMC, R = 1000), zstats =
-    ## TRUE): install the spatialreg package
-
+    
     ## Warning: Method impacts.sarlm moved to the spatialreg package
-
-    ## Warning in impacts.sarlm(sdm, tr = trMC, R = 1000): install the spatialreg
-    ## package
-
-    ## Warning: Function intImpacts moved to the spatialreg package
-
-    ## Warning in intImpacts(rho = rho, beta = beta, P = P, n = n, mu = mu, Sigma
-    ## = Sigma, : install the spatialreg package
-
-    ## Warning: Method summary.lagImpact moved to the spatialreg package
-
-    ## Warning in summary.lagImpact(impacts(sdm, tr = trMC, R = 1000), zstats =
-    ## TRUE): install the spatialreg package
-
+    
     ## Warning: Method impacts.sarlm moved to the spatialreg package
-
-    ## Warning in impacts.sarlm(sdm, tr = trMC, R = 1000): install the spatialreg
-    ## package
-
-    ## Warning: Function intImpacts moved to the spatialreg package
-
-    ## Warning in intImpacts(rho = rho, beta = beta, P = P, n = n, mu = mu, Sigma
-    ## = Sigma, : install the spatialreg package
-
-    ## Warning: Method summary.lagImpact moved to the spatialreg package
-
-    ## Warning in summary.lagImpact(impacts(sdm, tr = trMC, R = 1000), zstats =
-    ## TRUE): install the spatialreg package
-
+    
     ## Warning: Method impacts.sarlm moved to the spatialreg package
-
-    ## Warning in impacts.sarlm(sdm, tr = trMC, R = 1000): install the spatialreg
-    ## package
-
-    ## Warning: Function intImpacts moved to the spatialreg package
-
-    ## Warning in intImpacts(rho = rho, beta = beta, P = P, n = n, mu = mu, Sigma
-    ## = Sigma, : install the spatialreg package
-
-    ## Warning: Method summary.lagImpact moved to the spatialreg package
-
-    ## Warning in summary.lagImpact(impacts(sdm, tr = trMC, R = 1000), zstats =
-    ## TRUE): install the spatialreg package
-
+    
     ## Warning: Method impacts.sarlm moved to the spatialreg package
-
-    ## Warning in impacts.sarlm(sdm, tr = trMC, R = 1000): install the spatialreg
-    ## package
-
-    ## Warning: Function intImpacts moved to the spatialreg package
-
-    ## Warning in intImpacts(rho = rho, beta = beta, P = P, n = n, mu = mu, Sigma
-    ## = Sigma, : install the spatialreg package
-
-    ## Warning: Method summary.lagImpact moved to the spatialreg package
-
-    ## Warning in summary.lagImpact(impacts(sdm, tr = trMC, R = 1000), zstats =
-    ## TRUE): install the spatialreg package
 
     ## # A tibble: 45 x 7
     ##    var   effect Base  `Long, no tweet~ `Long, tweets` `Short, no twee~
     ##    <chr> <chr>  <chr> <chr>            <chr>          <chr>           
-    ##  1 Coll~ direct -0.0~ -0.08987 ***     -0.0904 ***    -0.08918 ***    
-    ##  2 Coll~ indir~ "-0.~ "-0.00303  "     "-0.0118  "    "0.00562  "     
-    ##  3 Coll~ total  -0.0~ -0.0929 ***      -0.10221 ***   -0.08357 ***    
-    ##  4 Full~ direct -0.0~ -0.06252 ***     -0.06113 ***   -0.06402 ***    
-    ##  5 Full~ indir~ -0.1~ -0.17928 ***     -0.17106 ***   -0.18558 ***    
-    ##  6 Full~ total  -0.2~ -0.2418 ***      -0.23219 ***   -0.2496 ***     
-    ##  7 log(~ direct 0.09~ 0.11296 .        "0.08774  "    0.12687 *       
-    ##  8 log(~ indir~ -1.5~ -1.49707 ***     -1.60613 ***   -1.33877 ***    
-    ##  9 log(~ total  -1.4~ -1.3841 ***      -1.51838 ***   -1.2119 ***     
-    ## 10 park~ direct <NA>  <NA>             <NA>           "-0.07672  "    
+    ##  1 Coll~ direct -0.0~ -0.08999 ***     -0.09049 ***   -0.08931 ***    
+    ##  2 Coll~ indir~ "-0.~ "-0.00215  "     "-0.01248  "   "0.00648  "     
+    ##  3 Coll~ total  -0.1~ -0.09215 ***     -0.10297 ***   -0.08282 ***    
+    ##  4 Full~ direct -0.0~ -0.06271 ***     -0.06116 ***   -0.06423 ***    
+    ##  5 Full~ indir~ -0.1~ -0.1802 ***      -0.17027 ***   -0.18691 ***    
+    ##  6 Full~ total  -0.2~ -0.2429 ***      -0.23143 ***   -0.25114 ***    
+    ##  7 log(~ direct "0.0~ 0.10933 .        "0.08755  "    0.12417 *       
+    ##  8 log(~ indir~ -1.5~ -1.49327 ***     -1.60768 ***   -1.34674 ***    
+    ##  9 log(~ total  -1.4~ -1.38394 ***     -1.52013 ***   -1.22258 ***    
+    ## 10 park~ direct <NA>  <NA>             <NA>           "-0.07402  "    
     ## # ... with 35 more rows, and 1 more variable: `Short, tweets` <chr>
 
 <!-- # Estimate Physical Activity Models -->
